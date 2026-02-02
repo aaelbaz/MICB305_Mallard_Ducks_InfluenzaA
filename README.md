@@ -1,4 +1,1 @@
-# MICB305
-### Name of repo will be changed upon decision of final project topic.
-
-MICB 305 - Final Project (Research Project for UJEMI)
+# Influenza A Subtype-Specific Effects on Cloacal Microbiomes of Wild Mallard Ducks During Infection
