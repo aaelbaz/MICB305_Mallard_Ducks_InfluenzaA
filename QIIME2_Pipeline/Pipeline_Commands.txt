@@ -1,0 +1,210 @@
+#### Relevant File Paths
+
+/datasets/project_2/duck_flu/duck_flu_seqs
+
+duck_flu_manifest_corrected.txt
+
+./duck_flu_metadata_wrangled.tsv
+
+
+
+#### Importing Sequencing Data (with manifest)
+
+# Import
+qiime tools import \
+  --type "SampleData[PairedEndSequencesWithQuality]" \
+  --input-format PairedEndFastqManifestPhred33V2 \
+  --input-path ./duck_flu_manifest_corrected.txt \
+  --output-path ./demux.qza
+
+# Visualize
+qiime demux summarize \
+  --i-data demux.qza \
+  --o-visualization demux.qzv
+
+
+
+#### BREAK 1 - Evaluate Optimal Truncation Length (forward: 0-246; reverse: 3-204)
+
+
+
+#### Denoising & Clustering (DADA2)
+
+# Determine ASVs
+qiime dada2 denoise-paired \
+  --i-demultiplexed-seqs demux.qza \
+  --p-trim-left-f 0 \
+  --p-trunc-len-f 246 \
+  --p-trim-left-r 3 \
+  --p-trunc-len-r 204 \
+  --o-representative-sequences rep-seqs.qza \
+  --o-table table.qza \
+  --o-denoising-stats stats.qza
+
+# Visualize stats
+qiime metadata tabulate \
+  --m-input-file stats.qza \
+  --o-visualization stats.qzv
+
+# Visualize relative to metadata
+qiime feature-table summarize \
+  --i-table table.qza \
+  --o-visualization table.qzv \
+  --m-sample-metadata-file ./duck_flu_metadata_wrangled.tsv
+
+# Visualize ASVs
+qiime feature-table tabulate-seqs \
+  --i-data rep-seqs.qza \
+  --o-visualization rep-seqs.qzv
+
+
+
+#### BREAK 2 - Verify Results are as Expected Thus Far
+
+
+
+#### Training Taxonomy Classifier & Applying it to the Data
+
+# Create reference sequences
+qiime feature-classifier extract-reads \
+  --i-sequences /datasets/silva_ref_files/silva-138-99-seqs.qza \
+  --p-f-primer GTGYCAGCMGCCGCGGTAA \
+  --p-r-primer GGACTACNVGGGTWTCTAAT \
+  --o-reads ref-seqs-trimmed.qza
+
+## NOTE: Primers are F515/806R (as per paper). Additionally, truncation of reference sequences was omitted as per QIIME2's recommendation for paired-end reads: "For classification of paired-end reads and untrimmed single-end reads, we recommend training a classifier on sequences that have been extracted at the appropriate primer sites, but are not trimmed." (https://docs.qiime2.org/2024.10/tutorials/feature-classifier/).
+
+
+# Match reference sequences with known taxonomies (train classifier)
+qiime feature-classifier fit-classifier-naive-bayes \
+  --i-reference-reads ref-seqs-trimmed.qza \
+  --i-reference-taxonomy /datasets/silva_ref_files/silva-138-99-tax.qza \
+  --o-classifier classifier.qza
+
+# Apply classifier to data
+qiime feature-classifier classify-sklearn \
+  --i-classifier classifier.qza \
+  --i-reads rep-seqs.qza \
+  --o-classification taxonomy.qza
+
+# Visualize taxonomic data
+qiime metadata tabulate \
+  --m-input-file taxonomy.qza \
+  --o-visualization taxonomy.qzv
+
+# Visualize taxa bar plot
+qiime taxa barplot \
+  --i-table table.qza \
+  --i-taxonomy taxonomy.qza \
+  --m-metadata-file ./duck_flu_metadata_wrangled.tsv \
+  --o-visualization taxa-bar-plots.qzv
+
+
+
+#### BREAK 3 - Check Visualizations & Determine Next Filtering Steps
+
+
+
+#### Filtering Data
+
+# Exclude mitochondrial/chloroplast taxa
+qiime taxa filter-table \
+  --i-table table.qza \
+  --i-taxonomy taxonomy.qza \
+  --p-exclude mitochondria,chloroplast \
+  --o-filtered-table no_mitochondria_chloroplast_table.qza
+
+# Include only identifications to at least the phylum level
+qiime taxa filter-table \
+  --i-table no_mitochondria_chloroplast_table.qza \
+  --i-taxonomy taxonomy.qza \
+  --p-include p__ \
+  --o-filtered-table at_least_phylum_resolution_table.qza
+
+
+
+#### Alpha & Beta Diversity Analyses
+
+# Generate a tree for phylogenetic diversity analyses
+qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences rep-seqs.qza \
+  --o-alignment aligned-rep-seqs.qza \
+  --o-masked-alignment masked-aligned-rep-seqs.qza \
+  --o-tree unrooted-tree.qza \
+  --o-rooted-tree rooted-tree.qza 
+
+# Make rarefaction plot
+qiime diversity alpha-rarefaction \
+  --i-table at_least_phylum_resolution_table.qza \
+  --i-phylogeny rooted-tree.qza \
+  --p-max-depth 10000 \
+  --m-metadata-file ./duck_flu_metadata_wrangled.tsv \
+  --o-visualization alpha-rarefaction.qzv 
+
+
+
+# Get new table.qzv for analysis
+qiime feature-table summarize \
+  --i-table at_least_phylum_resolution_table.qza \
+  --o-visualization at_least_phylum_resolution_table.qzv \
+  --m-sample-metadata-file ./duck_flu_metadata_wrangled.tsv
+
+
+
+#### BREAK 4 - Determine ideal rarefaction/sampling depth using alpha-rarefaction.qzv + table.qzv (filtered one). 
+
+
+# Calculate all alpha/beta diversity vectors
+qiime diversity core-metrics-phylogenetic \
+  --i-phylogeny rooted-tree.qza \
+  --i-table at_least_phylum_resolution_table.qza \
+  --p-sampling-depth 5396 \
+  --m-metadata-file ./duck_flu_metadata_wrangled.tsv \
+  --output-dir core-metrics-results-5396-depth
+
+
+# Calculate Shannon alpha diversity
+qiime diversity alpha-group-significance \
+  --i-alpha-diversity core-metrics-results/shannon_vector.qza \
+  --m-metadata-file ./duck_flu_metadata_wrangled.tsv \
+  --o-visualization core-metrics-results/shannon-group-significance.qzv
+
+# Calculate Faith's alpha diversity
+qiime diversity alpha-group-significance \
+  --i-alpha-diversity core-metrics-results/faith_pd_vector.qza \
+  --m-metadata-file ./duck_flu_metadata_wrangled.tsv \
+  --o-visualization core-metrics-results/faith-pd-group-significance.qzv
+
+# Calculate weighted unifrac beta diversity (only HA)
+qiime diversity beta-group-significance \
+  --i-distance-matrix core-metrics-results/weighted_unifrac_distance_matrix.qza \
+  --m-metadata-file ./duck_flu_metadata_wrangled.tsv \
+  --m-metadata-column ha_subtype \
+  --o-visualization core-metrics-results/weighted-unifrac-ha-subtype-significance.qzv \
+  --p-pairwise
+
+
+
+#### BREAK 5 - Switch over to PICRUSt2
+
+
+
+#### Functional Annotations
+
+mkdir picrust
+
+qiime tools export \
+   --input-path at_least_phylum_resolution_table.qza \
+   --output-path picrust
+
+qiime tools export \
+   --input-path rep-seqs.qza \
+   --output-path picrust
+
+conda deactivate
+conda activate picrust2
+
+picrust2_pipeline.py \
+   -s picrust/dna-sequences.fasta \
+   -i picrust/feature-table.biom \
+   -o picrust_out

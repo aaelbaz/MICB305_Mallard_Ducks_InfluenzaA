@@ -1,0 +1,116 @@
+sample_name	sample_identifier	num_bases	collection_date	country	state	county	precise_location	region	influenza_status	sex	influenza_level	ct_value	genotype	ha_subtype	na_subtype	HA_NA
+SRR5275161	UCD.09.05149	21090500	2009-07-25	USA	California	 Solano County	Arnold Ranch	Suisun Marsh	Pos	female	2	35.49	25	5	2	H5N2
+SRR5275160	UCD.09.05174	22075000	2009-07-25	USA	California	 Solano County	Sunrise	Suisun Marsh	Pos	male	3	33.01	25	5	2	H5N2
+SRR5275159	UCD.09.05191	11459500	2009-07-27	USA	California	 Solano County	Arnold Ranch	Suisun Marsh	Pos	male	NA	NA	25	5	2	H5N2
+SRR5275158	UCD.09.05192	10732000	2009-07-27	USA	California	 Solano County	Arnold Ranch	Suisun Marsh	Pos	male	3	31.93	12	4	2	H4N2
+SRR5275157	UCD.09.05197	12508500	2009-07-27	USA	California	 Solano County	Arnold Ranch	Suisun Marsh	Pos	female	1	41.95	25	5	2	H5N2
+SRR5275156	UCD.09.05205	22968000	2009-07-27	USA	California	 Solano County	Arnold Ranch	Suisun Marsh	Pos	female	2	35.41	NA	4	2.6	H4N2.6
+SRR5275155	UCD.09.05212	23663000	2009-07-27	USA	California	 Solano County	Sunrise	Suisun Marsh	Pos	female	1	43.54	25	5	2	H5N2
+SRR5275154	UCD.09.05219	16982000	2009-07-27	USA	California	 Solano County	Sunrise	Suisun Marsh	Pos	male	3	33	25	5	2	H5N2
+SRR5275153	UCD.09.05222	12496500	2009-07-27	USA	California	 Solano County	Sunrise	Suisun Marsh	Pos	male	3	33.43	25	5	2	H5N2
+SRR5275393	UCD.09.05233	7987500	2009-07-27	USA	California	 Solano County	Balboa	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275392	UCD.09.05235	8409000	2009-07-27	USA	California	 Solano County	Balboa	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275391	UCD.09.05236	16670500	2009-07-27	USA	California	 Solano County	Balboa	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275390	UCD.09.05238	12805500	2009-07-27	USA	California	 Solano County	Balboa	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275389	UCD.09.05239	12021000	2009-07-27	USA	California	 Solano County	Balboa	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275388	UCD.09.05240	13555500	2009-07-27	USA	California	 Solano County	Balboa	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275387	UCD.09.05241	11642000	2009-07-27	USA	California	 Solano County	Balboa	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275386	UCD.09.05243	11999500	2009-07-27	USA	California	 Solano County	Balboa	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275385	UCD.09.05244	13909500	2009-07-27	USA	California	 Solano County	Balboa	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275152	UCD.09.05255.V	14820500	2009-07-28	USA	California	 Solano County	Arnold Ranch	Suisun Marsh	Pos	female	1	40.93	5	3	8	H3N8
+SRR5275151	UCD.09.05271	22303000	2009-07-29	USA	California	 Solano County	Arnold Ranch	Suisun Marsh	Pos	male	2	35.13	14	4	6	H4N6
+SRR5275150	UCD.09.05282	10516000	2009-07-29	USA	California	 Solano County	Arnold Ranch	Suisun Marsh	Pos	male	3	34.91	NA	3.4	2.8	H3.4N2.8
+SRR5275149	UCD.09.05296	10139500	2009-07-29	USA	California	 Solano County	Sunrise	Suisun Marsh	Pos	male	3	34.79	25	5	2	H5N2
+SRR5275148	UCD.09.05319	12120000	2009-07-23	USA	California	 Solano County	Arnold Ranch	Suisun Marsh	Pos	male	2	35.96	25	5	2	H5N2
+SRR5275147	UCD.09.05491	9209000	2009-07-23	USA	California	 Solano County	Arnold Ranch	Suisun Marsh	Pos	male	2	36.78	25	5	2	H5N2
+SRR5275146	UCD.09.05495	12440000	2009-07-23	USA	California	 Solano County	Arnold Ranch	Suisun Marsh	Pos	female	2	35.28	13	4	2	H4N2
+SRR5275145	UCD.09.05502	6370000	2009-07-23	USA	California	 Solano County	Balboa	Suisun Marsh	Pos	male	3	32.63	25	5	2	H5N2
+SRR5275384	UCD.10.01139.CP	10885500	2010-07-27	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275383	UCD.10.01140.CP	8499000	2010-07-27	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275144	UCD.10.01141.CP	23833500	2010-07-27	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275143	UCD.10.01142.CP	15565000	2010-07-27	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275142	UCD.10.01143.CP	20996500	2010-07-27	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275141	UCD.10.01144.CP	36977500	2010-07-27	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275140	UCD.10.01145.CP	22946500	2010-07-27	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275139	UCD.10.01146.CP	32141500	2010-07-27	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275138	UCD.10.01147.CP	19197000	2010-07-27	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275137	UCD.10.01148.CP	4596500	2010-07-27	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275136	UCD.10.01156.CP	9056500	2010-07-27	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	3	32.3	15	4	6	H4N6
+SRR5275135	UCD.10.1188.CV	9808500	2010-07-29	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	2	35.84	16	4	6	H4N6
+SRR5275134	UCD.10.1297.CP	18238500	2010-07-30	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	2	35.5	16	4	6	H4N6
+SRR5275133	UCD.11.02521	23205000	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	3	32.09	6	3	8	H3N8
+SRR5275132	UCD.11.02522	29179500	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275131	UCD.11.02524	26146000	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275130	UCD.11.02525.P.H4	24280000	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	2	38.35	17	4	6	H4N6
+SRR5275129	UCD.11.02526	20950000	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275128	UCD.11.02527.V.H5	15408500	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	4	28.83	26	5	1	H5N1
+SRR5275127	UCD.11.02528	13294500	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275126	UCD.11.02529	12736000	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275125	UCD.11.02531.P.H5	12626500	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	3	30.5	26	5	1	H5N1
+SRR5275124	UCD.11.02532.H4	33124000	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	1	41.6	18	4	6	H4N6
+SRR5275123	UCD.11.02533.V.H4	16787000	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	3	31.47	17	4	6	H4N6
+SRR5275122	UCD.11.02535.P.H5	12199500	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	3	31.96	26	5	1	H5N1
+SRR5275121	UCD.11.02536.H5	27719000	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	3	30.17	26	5	1	H5N1
+SRR5275120	UCD.11.02538	15697500	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275119	UCD.11.02541	4297000	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275118	UCD.11.02542.V.H5	10914000	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	NA	NA	26	5	1	H5N1
+SRR5275117	UCD.11.02546	10439000	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275116	UCD.11.02547.V.H3	13421000	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	2	36.74	6	3	8	H3N8
+SRR5275115	UCD.11.02549.V.H3	9365500	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	1	40.55	6	3	8	H3N8
+SRR5275114	UCD.11.02552.V.H4	12180500	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	2	37.23	22	4	8	H4N8
+SRR5275113	UCD.11.02563.P.H4	12969500	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	3	30.82	18	4	6	H4N6
+SRR5275112	UCD.11.02566.P.H4	16088000	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	2	35.3	23	4	8	H4N8
+SRR5275111	UCD.11.02584.P.H4	10723000	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	1	42.61	24	4	9	H4N9
+SRR5275110	UCD.11.02589.P.H4	15638500	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	2	35.4	11	4	1	H4N1
+SRR5275109	UCD.11.02590.V.H4	16037500	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	2	35.06	19	4	6	H4N6
+SRR5275108	UCD.11.02594.P.H4	11891000	2011-08-12	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	3	34.83	18	4	6	H4N6
+SRR5275107	UCD.12.02721.P	7694500	2012-07-09	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275106	UCD.12.02722.P	11325000	2012-07-09	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275105	UCD.12.02723.P	22415000	2012-07-09	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	NA	0	NA	NA	neg	neg	neg
+SRR5275104	UCD.12.02724.P	12306500	2012-07-09	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275103	UCD.12.02725.P	10955000	2012-07-09	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275102	UCD.12.02726.P	13744500	2012-07-09	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275101	UCD.12.02727.P	12249500	2012-07-09	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275100	UCD.12.02729.P	8650000	2012-07-09	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275099	UCD.12.02730.P	16191000	2012-07-09	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275098	UCD.12.02743.VB.H3	12392500	2012-07-09	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	2	38.78	7	3	8	H3N8
+SRR5275097	UCD.12.02744.VB.H3	15699500	2012-07-11	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	2	35.55	7	3	8	H3N8
+SRR5275096	UCD.12.02762.VA.H3	17060000	2012-07-11	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	2	36.66	7	3	8	H3N8
+SRR5275095	UCD.12.02783.VA.H3	16309000	2012-07-13	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	2	39.92	9	3	8	H3N8
+SRR5275094	UCD.12.02829.VA.H2	10633000	2012-07-16	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	3	34.16	1	2	3	H2N3
+SRR5275093	UCD.12.02833.VA.H2	15566500	2012-07-16	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	3	33.41	1	2	3	H2N3
+SRR5275092	UCD.12.02838.VB.H2	16465000	2012-07-16	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	2	35.26	1	2	3	H2N3
+SRR5275091	UCD.12.02839.VB.H2	5277500	2012-07-16	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	3	30.7	2	2	3	H2N3
+SRR5275090	UCD.12.02840.VB.H2	13561000	2012-07-16	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	3	33.83	2	2	3	H2N3
+SRR5275089	UCD.12.02841.VA.H2	11800500	2012-07-16	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	1	40.36	2	2	3	H2N3
+SRR5275088	UCD.12.02858.VB.H2	4242000	2012-07-18	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	3	34.48	4	2	7	H2N7
+SRR5275087	UCD.12.02867.VB.H2	5850500	2012-07-18	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	3	31.38	2	2	3	H2N3
+SRR5275086	UCD.12.02885.VB.H2	12820000	2012-07-20	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	4	29.43	3	2	3	H2N3
+SRR5275085	UCD.12.02904.VB.H3	16569000	2012-07-20	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	2	39.01	9	3	8	H3N8
+SRR5275084	UCD.12.02924.VB.H3	19359500	2012-07-23	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	2	39.45	8	3	8	H3N8
+SRR5275083	UCD.12.02945.VB.H3	13375000	2012-07-23	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	2	36.68	10	3	8	H3N8
+SRR5275082	UCD.13.01343	15661500	2013-07-18	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275081	UCD.13.01344	10448000	2013-07-18	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275080	UCD.13.01345	4814500	2013-07-18	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275079	UCD.13.01346	18224000	2013-07-18	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275078	UCD.13.01347	14573000	2013-07-18	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	male	0	NA	NA	neg	neg	neg
+SRR5275077	UCD.13.01349.VB.H4	14915500	2013-07-22	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	2	36.77	20	4	6	H4N6
+SRR5275076	UCD.13.01351	19838500	2013-07-22	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275075	UCD.13.01352	13138000	2013-07-22	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275074	UCD.13.01354	13660500	2013-07-22	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Neg	female	0	NA	NA	neg	neg	neg
+SRR5275073	UCD.13.01357.VB.H5	13428000	2013-07-22	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	3	33.32	27	5	5	H5N5
+SRR5275072	UCD.13.01358.PA.H4	14044000	2013-07-22	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	1	40.14	21	4	6	H4N6
+SRR5275071	UCD.13.01369.VB.H4	14690000	2013-07-22	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	3	33.28	21	4	6	H4N6
+SRR5275070	UCD.13.01370.VA.H5	14856500	2013-07-22	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	4	24.78	28	5	5	H5N5
+SRR5275069	UCD.13.01371.VA.H5	15632000	2013-07-22	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	2	35.71	28	5	5	H5N5
+SRR5275068	UCD.13.01375.VA.H5	30007500	2013-07-22	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	3	32.99	28	5	5	H5N5
+SRR5275067	UCD.13.01376.VB.H5	14684000	2013-07-22	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	3	34.66	28	5	5	H5N5
+SRR5275066	UCD.13.01386.VB.H5	16600500	2013-07-23	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	0	NA	NA	5	neg	H5N5
+SRR5275065	UCD.13.01392.VB.H5	16092500	2013-07-23	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	4	25.22	28	5	5	H5N5
+SRR5275064	UCD.13.01395.VB.H5	19845500	2013-07-23	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	4	28.84	28	5	5	H5N5
+SRR5275063	UCD.13.01396.VB.H4	19480000	2013-07-23	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	2	38.17	21	4	6	H4N6
+SRR5275062	UCD.13.01397.VB.H5	12170000	2013-07-23	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	3	31.35	28	5	5	H5N5
+SRR5275061	UCD.13.01398.VB.H4	17838000	2013-07-23	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	2	36.17	21	4	6	H4N6
+SRR5275060	UCD.13.01399.VB.H5	18731500	2013-07-23	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	female	3	32.48	28	5	5	H5N5
+SRR5275059	UCD.13.01483.VB.H4	19774500	2013-07-30	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	3	30.94	21	4	6	H4N6
+SRR5275058	UCD.13.01486.PA.H4	14670000	2013-07-30	USA	California	 Solano County	Grizzly Island Wildlife Area	Suisun Marsh	Pos	male	2	39.82	21	4	6	H4N6
