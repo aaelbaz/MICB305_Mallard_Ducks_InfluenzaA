@@ -1,0 +1,202 @@
+---
+title: "Alpha_Diversity"
+output: html_document
+---
+
+```{r}
+#Loading the packages needed for Alpha diversity measures and statistical 
+#analysis. 
+
+library(tidyverse)
+library(phyloseq)
+library(vegan)
+library(ggpubr)
+library(picante)
+library(ape)
+library(dunn.test)
+```
+
+
+```{r}
+metadata = read.delim("duck_flu_metadata_wrangled.tsv", row.names = 1) 
+taxonomy = read.delim('taxonomy.tsv', row.names = 1) 
+counts = read.delim('feature-table.txt', skip=1, row.names=1)  
+tree = read_tree("tree.nwk")
+
+```
+
+```{r}
+taxonomy_formatted = taxonomy %>% 
+  separate(col = Taxon, 
+           into = c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species"), sep = ";", fill = "right") %>% 
+  select(-Confidence) %>% 
+  as.matrix()
+
+counts_formatted = counts %>% as.matrix()
+
+ps = phyloseq(sample_data(metadata), otu_table(counts_formatted, taxa_are_rows =T), tax_table(taxonomy_formatted), tree)
+```
+```{r}
+psrare= ps %>% rarefy_even_depth(sample.size = 5396, rngseed = 360)
+
+#The rarefraction depth was decided based on qiime 2 outputs 
+```
+Shannon's Diversity Index
+```{r}
+set.seed(360)
+p = plot_richness(psrare, x="HA_NA",
+                        measures = c("Shannon"),
+                  color= "HA_NA")
+
+pdata = p$data
+
+
+# p_formatted = pdata %>% ggplot(aes(HA_NA,value, fill = HA_NA)) +
+#   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+#   geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
+# theme_classic(base_size=16)+
+#   ylab("Shannon Diversity") + xlab(NULL) +
+#   theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12)) +
+#   labs(fill= "HA_NA")
+# p_formatted
+```
+
+```{r}
+
+#Statistical significance 
+df <- data.frame(HA_NA = as.factor(pdata$HA_NA), value = pdata$value)
+#Kruskal-Wallis and Dunn's test as post-hoc
+res_sig <-dunn.test(df$value, df$HA_NA, kw=TRUE, method = "bh")
+
+results_df <- data.frame(
+  subtype_comparison = res_sig$comparisons,
+  p_adjusted = res_sig$P.adjusted
+)
+
+
+```
+
+```{r}
+set.seed(360)
+p_NA_shannon = plot_richness(psrare, x="na_subtype",
+                        measures = c("Shannon"),
+                  color= "na_subtype")
+
+pdata_NA_shannon = p_NA_shannon$data
+
+# p_formatted_NA = pdata_NA_shannon %>% ggplot(aes(na_subtype,value, fill = na_subtype)) +
+#   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+#   geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
+# theme_classic(base_size=16)+
+#   ylab("Shannon Diversity") + xlab(NULL) +
+#   theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12)) +
+#   labs(fill= "na_subtype")
+# p_formatted_NA
+
+
+```
+
+```{r}
+df_NA_shannon <- data.frame(na_subtype = as.factor(pdata_NA_shannon$na_subtype), value = pdata_NA_shannon$value)
+#Kruskal-Wallis and Dunn's test as post-hoc
+res_sig_NA <-dunn.test(df_NA_shannon$value, df_NA_shannon$na_subtype, kw=TRUE,
+                    method = "bh")
+
+results_df_NA <- data.frame(
+  subtype_comparison = res_sig_NA$comparisons,
+  p_adjusted = res_sig_NA$P.adjusted
+)
+
+
+```
+
+```{r}
+set.seed(360)
+p_HA_shannon = plot_richness(psrare, x="ha_subtype",
+                        measures = c("Shannon"),
+                  color= "ha_subtype")
+
+pdata_HA_shannon = p_HA_shannon$data
+
+```
+
+```{r}
+df_HA_shannon <- data.frame(ha_subtype = as.factor(pdata_HA_shannon$ha_subtype), value = pdata_HA_shannon$value)
+#Kruskal-Wallis and Dunn's test as post-hoc
+res_sig_HA <-dunn.test(df_HA_shannon$value, df_HA_shannon$ha_subtype, kw=TRUE,
+                    method = "bh")
+
+results_df_HA <- data.frame(
+  subtype_comparison = res_sig_HA$comparisons,
+  p_adjusted = res_sig_HA$P.adjusted
+)
+
+```
+
+Faith's Diversity
+
+```{r}
+# Setup ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# taxa must be columns instead of rows, this will convert it if needed
+otu = as(otu_table(psrare), "matrix")
+if(taxa_are_rows(psrare)==TRUE) otu <- t(otu)
+
+# Extract your phyloseq object's tree
+tree_faith = phy_tree(psrare)
+
+# check that all the ASV names match between OTU table and tree
+stopifnot(all(colnames(otu) %in% tree_faith$tip.label))
+# reorder tree tips to match ASV order, if needed:
+# Won't hurt to run this on your data if it's unnecessary.
+#    remove any unmatched tips
+tree_faith = drop.tip(tree_faith, setdiff(tree_faith$tip.label, colnames(otu)))
+#    reorder to match
+tree_faith = keep.tip(tree_faith, colnames(otu))
+
+# root the tree if it's unrooted
+if(!is.rooted(tree_faith)) tree_faith <- root(tree_faith, outgroup=tree_faith$tip.label[1], resolve.root=TRUE)
+
+# Calculate Faith's PD for each sample ~~~~~~~~~~~~
+#    1. Convert reads to presence/absence and pull into a matrix
+otu_pa = otu # Make a copy of your data, then...
+otu_pa[otu_pa>0] = 1 #...convert to presence/absence (1 for present, 0 for absent)
+#    2. Calculate metric
+faith = pd(otu_pa, tree_faith, include.root = TRUE) %>% select(-SR)
+
+view(pdata)
+
+
+# Now you can add this to your phyloseq data and plot it like the other metrics!
+
+metadata_rarefied = data.frame(sample_data(psrare))
+
+faith_metadata = merge(metadata_rarefied, faith, by= "row.names")
+
+view(faith_metadata)
+
+
+
+
+```
+HA_NA
+```{r}
+faith_HA_NA_df <- data.frame(HA_NA = as.factor(faith_metadata$HA_NA), value = faith_metadata$PD)
+
+faith_HA_NA_sig <-dunn.test(faith_HA_NA_df$value, faith_HA_NA_df$HA_NA, kw=TRUE, method = "bh")
+```
+NA Subtype
+```{r}
+faith_NA_df <- data.frame(na_subtype = as.factor(faith_metadata$na_subtype), 
+                                                 value = faith_metadata$PD)
+faith_NA_sig <- dunn.test(faith_NA_df$value, faith_NA_df$na_subtype, kw=TRUE, method = "bh")
+```
+HA Subtype
+```{r}
+faith_HA_df <- data.frame(ha_subtype = as.factor(faith_metadata$ha_subtype), 
+                                                 value = faith_metadata$PD)
+faith_HA_sig <- dunn.test(faith_HA_df$value, faith_HA_df$ha_subtype, kw=TRUE, method = "bh")
+```
+ 
+
+
+
