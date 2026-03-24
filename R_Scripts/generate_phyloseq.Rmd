@@ -1,0 +1,50 @@
+---
+title: "generate_phyloseq"
+output: html_document
+---
+
+# Generate Phyloseq Object for use in Analyses
+
+## 1. Load Libraries
+
+```{r}
+library(tidyverse)
+library(phyloseq)
+```
+
+## 2. Load Data
+
+```{r}
+metadata = read.delim('../processed_data/metadata_processed.tsv', row.names = 1)
+taxonomy = read.delim('../processed_data/taxonomy.tsv', row.names = 1)
+counts = read.delim('../processed_data/feature-table.txt', skip=1, row.names=1)
+tree = read_tree("../processed_data/tree.nwk")
+```
+
+## 3. Generate Phyloseq Object
+
+```{r}
+# Format Taxonomy
+taxa_formatted = taxonomy %>%
+  separate(col = Taxon,
+           into = c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species"),
+           fill="right",
+           sep = ";") %>%
+  select(-Confidence) %>%
+  as.matrix()
+
+# Format counts
+counts_formatted = counts %>% as.matrix()
+
+# Generate Phyloseq object
+ps = phyloseq(sample_data(metadata),
+              otu_table(counts_formatted, taxa_are_rows = TRUE),
+              tax_table(taxa_formatted),
+              tree)
+```
+
+## 4. Save Phyloseq Object
+
+```{r}
+saveRDS(ps, "../processed_data/phyloseq_taxonomy.rds")
+```

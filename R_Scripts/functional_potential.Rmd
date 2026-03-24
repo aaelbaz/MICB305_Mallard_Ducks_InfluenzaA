@@ -1,0 +1,98 @@
+---
+title: "functional_potential"
+output: html_document
+creator: "Alex Elbaz"
+---
+
+# Predicted Functional Potential Analyses (PICRUSt2)
+
+## 1. Load Libraries
+
+```{r}
+library(tidyverse)
+library(phyloseq)
+library(ggpicrust2)
+library(devtools)
+install_github("zhouhj1994/LinDA")
+
+# A modified ggpicrust2 errorbar function from the MICB 305 2025W2 GitHub is used within this script (import below).
+# This code is attributed to the creators of the MICB 305 2025W2 GitHub and is cited within our research paper.
+source('reference_functions/ggpicrust2_errorbar_function_fixed.R')
+```
+
+## 2. Load Data
+
+Functional annotations were generated via command-line PICRUSt2 and then exported into this project under the `../processed_data/` directory.
+
+```{r}
+metadata = read.delim('../processed_data/metadata_processed.tsv')
+metacyc_path_abun = read.delim('../processed_data/path_abun_unstrat.tsv', row.names = 1)
+```
+
+## 3. Set Seed
+
+```{r}
+set.seed(1234)
+```
+
+## 4. Conduct Functional Potential Analysis (via ggpicrust2)
+
+This analysis examines differences in predicted functional potential between infected and uninfected mallards.
+
+```{r}
+# Rename and order groups appropriately so the downstream figure is more interpretable
+metadata$influenza_status = replace_values(metadata$influenza_status, from = "Pos", to = "infected") %>%
+  replace_values(from = "Neg", to = "uninfected") %>%
+  factor(levels = c("infected", "uninfected"))
+
+# Run pathway differential abundance analysis (LinDA method)
+daa_df = pathway_daa(abundance = metacyc_path_abun,
+                     metadata = metadata,
+                     group = "influenza_status",
+                     daa_method = "LinDA",
+                     select = NULL,
+                     reference = NULL)
+
+# Add pathway annotations
+daa_annotated_df = pathway_annotation(pathway = "MetaCyc", daa_results_df = daa_df)
+```
+
+## 5. Generate Figure (Bar plot showing significant pathways)
+
+Of note, an adjusted p-value cutoff of \< 0.001 and absolute log2 fold change cutoff of \>= 2.5 was applied in order to highlight the most significant results while maintaining figure readability.
+
+```{r}
+# Create column containing both pathway names & annotations
+daa_annotated_df = daa_annotated_df %>%
+  mutate(label = paste(feature, ifelse(is.na(description), "No description available", description), sep = "; "))
+
+# Filter for significant results
+daa_annotated_df_filt = filter(daa_annotated_df, abs(log2FoldChange) >= 2.5 & p_adjust < 0.001)
+
+# Generate pathway errorbar plot
+peb = pathway_errorbar_fixed(abundance = metacyc_path_abun,
+                             daa_results_df = daa_annotated_df_filt,
+                             Group = metadata$influenza_status,
+                             order_by_log = TRUE,
+                             ko_to_kegg = FALSE,
+                             p_value_bar = TRUE,
+                             x_lab = "label")
+```
+
+## 6. Save Figure
+
+```{r}
+ggsave("../visualizations/figures/functional_potential.png", plot = peb, width = 18, height = 10)
+```
+
+## 7. Additional Useful Information
+
+```{r}
+num_pathways = nrow(daa_annotated_df)
+num_signif = nrow(filter(daa_annotated_df, p_adjust < 0.05))
+prop_signif = num_signif/num_pathways
+
+print(paste("Pathways analyzed:", num_pathways))
+print(paste("Significant pahtways (p_adjust < 0.05):", num_signif))
+print(paste("Proportion significant:", round(prop_signif, 2)))
+```
