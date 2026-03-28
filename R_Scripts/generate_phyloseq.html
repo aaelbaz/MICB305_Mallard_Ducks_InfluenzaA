@@ -377,8 +377,22 @@ taxonomy = read.delim(&#39;../processed_data/taxonomy.tsv&#39;, row.names = 1)
 counts = read.delim(&#39;../processed_data/feature-table.txt&#39;, skip=1, row.names=1)
 tree = read_tree(&quot;../processed_data/tree.nwk&quot;)</code></pre>
 </div>
+<div id="wrangle-metadata-i.e.-create-the-groupings-used-for-analysis" class="section level2">
+<h2>3. Wrangle Metadata (i.e., create the groupings used for
+analysis)</h2>
+<pre class="r"><code># HA Group 1 includes H1, H2, H5, H6, H8, H9, H11, H12, H13, &amp; H16
+ha_grp_1 = c(&quot;1&quot;, &quot;2&quot;, &quot;5&quot;, &quot;6&quot;, &quot;8&quot;, &quot;9&quot;, &quot;11&quot;, &quot;12&quot;, &quot;13&quot;, &quot;16&quot;)
+
+# HA Group 2 includes H3, H4, H7, H10, H14, &amp; H15
+ha_grp_2 = c(&quot;3&quot;, &quot;4&quot;, &quot;7&quot;, &quot;10&quot;, &quot;14&quot;, &quot;15&quot;)
+
+metadata = metadata %&gt;%
+  mutate(ha_aggr = str_extract(ha_subtype, &quot;^[^.]+&quot;)) %&gt;%
+  mutate(na_aggr = str_extract(na_subtype, &quot;^[^.]+&quot;)) %&gt;%
+  mutate(ha_group = ifelse(ha_aggr %in% ha_grp_1, &quot;1&quot;, ifelse(ha_aggr %in% ha_grp_2, &quot;2&quot;, &quot;neg&quot;)))</code></pre>
+</div>
 <div id="generate-phyloseq-object" class="section level2">
-<h2>3. Generate Phyloseq Object</h2>
+<h2>4. Generate Phyloseq Object</h2>
 <pre class="r"><code># Format Taxonomy
 taxa_formatted = taxonomy %&gt;%
   separate(col = Taxon,
@@ -398,7 +412,7 @@ ps = phyloseq(sample_data(metadata),
               tree)</code></pre>
 </div>
 <div id="save-phyloseq-object" class="section level2">
-<h2>4. Save Phyloseq Object</h2>
+<h2>5. Save Phyloseq Object</h2>
 <pre class="r"><code>saveRDS(ps, &quot;../processed_data/phyloseq_taxonomy.rds&quot;)</code></pre>
 </div>
 </div>

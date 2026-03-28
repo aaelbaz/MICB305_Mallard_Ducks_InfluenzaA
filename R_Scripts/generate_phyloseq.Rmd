@@ -21,7 +21,22 @@ counts = read.delim('../processed_data/feature-table.txt', skip=1, row.names=1)
 tree = read_tree("../processed_data/tree.nwk")
 ```
 
-## 3. Generate Phyloseq Object
+## 3. Wrangle Metadata (i.e., create the groupings used for analysis)
+
+```{r}
+# HA Group 1 includes H1, H2, H5, H6, H8, H9, H11, H12, H13, & H16
+ha_grp_1 = c("1", "2", "5", "6", "8", "9", "11", "12", "13", "16")
+
+# HA Group 2 includes H3, H4, H7, H10, H14, & H15
+ha_grp_2 = c("3", "4", "7", "10", "14", "15")
+
+metadata = metadata %>%
+  mutate(ha_aggr = str_extract(ha_subtype, "^[^.]+")) %>%
+  mutate(na_aggr = str_extract(na_subtype, "^[^.]+")) %>%
+  mutate(ha_group = ifelse(ha_aggr %in% ha_grp_1, "1", ifelse(ha_aggr %in% ha_grp_2, "2", "neg")))
+```
+
+## 4. Generate Phyloseq Object
 
 ```{r}
 # Format Taxonomy
@@ -43,7 +58,7 @@ ps = phyloseq(sample_data(metadata),
               tree)
 ```
 
-## 4. Save Phyloseq Object
+## 5. Save Phyloseq Object
 
 ```{r}
 saveRDS(ps, "../processed_data/phyloseq_taxonomy.rds")
