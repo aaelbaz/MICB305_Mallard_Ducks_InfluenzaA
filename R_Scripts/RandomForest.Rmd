@@ -1,0 +1,136 @@
+---
+title: "RandomForest"
+author: "David"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading libraries
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(phyloseq)
+library(vegan)
+library(ggpubr)
+library(microbiome)
+library(indicspecies)
+library(writexl)
+library(ANCOMBC)
+library(broom)
+library(randomForest)
+library(caret)
+library(ranger)
+library(pROC)
+library(boot)
+library(MLmetrics)
+```
+
+## Loading Datafiles
+
+To run our randomforest model we will use the same phyloseq object during earlier coding work. We will attempt to generate a randomforest predictive model using specific genera and their abundances based on previous results, including ...... . The MICB 305 reference script by Avril Metcalfe-Roach will be used to run a randomforest model.
+
+```{r}
+ps = readRDS('../processed_data/phyloseq_taxonomy.rds')|>
+  tax_glom("Genus")
+
+```
+
+## Prepping our phyloseq object based on our identified genera of interest:
+
+```{r}
+
+genera_of_interest <- c("2d078b9d17ad33f59805e14ad64f8dfb", "a077b826f6681b86b0acda2a370692dc",
+                        "527355921e32c01d361cc45757bf5d52")
+
+ps_clr = ps |>
+  microbiome::transform("clr")
+
+ps_filt = prune_taxa(genera_of_interest, ps_clr)
+
+df <- psmelt(ps_filt)
+
+df_transformed <- df |>
+  group_by("Genus") |>
+  mutate(Abundance = scale(Abundance))|>
+  ungroup()
+
+df_pivot = df_transformed |>
+  select(Sample, ha_group, Genus, Abundance) |>
+  pivot_wider(names_from = Genus, values_from = Abundance)
+
+df_noNA <- df_pivot |>
+  na.omit()
+
+df_final <- df_noNA|>
+  select(-Sample)
+
+
+```
+## Running our RandomForest Model
+
+```{r}
+
+predictors <- df_final|>
+  select(-ha_group)
+
+df_final <- df_final |>
+  mutate(ha_group = case_when(ha_group == "1" ~ "one", ha_group == "2" ~ "two", ha_group == "neg" ~ "neg"))
+
+outcome = df_final|>
+  pull(ha_group)|>
+  factor(levels = c("one", "two", "neg"))
+
+k = 10
+set.seed(420)
+folds = createFolds(outcome, k=k, list = TRUE)
+
+str(folds)
+
+tune_grid = expand.grid(mtry = c(2,3), splitrule = c(
+  "gini"), min.node.size = c(100,150, 200)
+)
+
+
+source("reference_functions/randomforest_functions.R")
+
+## Using Avril's Code (With some minor edits due to the neccesity for multiclass randomforest)
+
+pd_model = run_rf(X= predictors, y = outcome, fold_list = folds, hyper = tune_grid, rngseed = 421)
+
+names(pd_model)
+
+
+```
+
+## Visualizing our Results:
+
+```{r}
+
+roc_test = roc(pd_model$test_labels$true_labels,
+               pd_model$test_labels$predicted_probabilities)
+roc_train = roc(pd_model$train_labels$true_labels,
+                pd_model$train_labels$predicted_probabilities)
+
+
+ggplot() +
+  geom_line(aes(x = 1 - roc_train$specificities, 
+                y = roc_train$sensitivities), 
+            color = "red",size=1) +
+  geom_line(aes(x = 1 - roc_test$specificities,
+                y = roc_test$sensitivities), 
+            color = "black",size=1) +
+  geom_abline(slope = 1, intercept = 0, color = "gray", linetype = "dashed",size=1) +
+  labs(x = "False Positive Rate", y = "True Positive Rate") +
+  annotate("text", x = 0.7, y = 0.2, 
+           label = sprintf("Train (red): %.2f (%.2f-%.2f)\nTest (black): %.2f (%.2f-%.2f)",
+           auc(roc_train), pd_model$auc_train_ci[1], pd_model$auc_train_ci[2],
+           auc(roc_test), pd_model$auc_test_ci[1], pd_model$auc_test_ci[2]), 
+           size = 6) +
+  theme_minimal(base_size=18)
+
+```
