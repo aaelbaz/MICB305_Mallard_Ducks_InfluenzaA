@@ -23,6 +23,12 @@ tree = read_tree("../processed_data/tree.nwk")
 
 ## 3. Wrangle Metadata (i.e., create the groupings used for analysis)
 
+For the purposes of our analyses, we deemed it appropriate analyze HA & NA groups separately. Additionally, given the small sample size of our data, we deemed it most appropriate to aggregate HA and NA groups as follows:
+
+-   Both HA & NA: Aggregate sub-subtypes to subtypes (i.e., H5.2 --\> H5, N3.2 --\> N3, etc.).
+
+-   HA: Bucket subtypes into two groups based on protein phylogeny established in prior literature.
+
 ```{r}
 # HA Group 1 includes H1, H2, H5, H6, H8, H9, H11, H12, H13, & H16
 ha_grp_1 = c("1", "2", "5", "6", "8", "9", "11", "12", "13", "16")
