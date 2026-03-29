@@ -1,0 +1,69 @@
+---
+title: "differential_abundance"
+output: html_document
+---
+
+# Differential Abundance Analysis using ANCOMBC2
+
+## Loading in Packages
+
+```{r}
+library(tidyverse)
+library(phyloseq)
+library(ANCOMBC)
+library(microbiome)
+library(ggplot2)
+library(ggrepel)
+```
+
+Wrangling steps
+
+```{r}
+ps = readRDS('../processed_data/phyloseq_taxonomy.rds')
+```
+
+```{r}
+# setting seed
+set.seed(412)
+
+
+ps_genus = tax_glom(ps, 'Genus')
+
+temp_relab = transform(ps_genus, 'compositional')
+temp_filt = filter_taxa(temp_relab, function(x) mean(x) >= 0.0001, TRUE)
+
+ps_filt = prune_taxa(taxa_names(temp_filt),ps_genus)
+ps_filt
+```
+
+# HA Subtypes
+
+## Running ANCOMBC2 Analysis
+
+```{r}
+ha_out = ancombc2(data = ps_filt, 
+               fix_formula = 'ha_group', 
+               p_adj_method = 'BH',
+               prv_cut = 0.3) # increased due to small sample size
+
+ha_statistical_table = ha_out$res
+view(ha_statistical_table)
+```
+
+## Volcano Plots
+
+```{r}
+### H1 vs H2 ### 
+ha_statistical_table$association_ = ifelse(ha_statistical_table$q_ha_group2 < 0.05 & ha_statistical_table$lfc_ha_group2 > 0, "Enriched", "Not significant")
+ha_statistical_table$association = ifelse(ha_statistical_table$q_ha_group2 < 0.05 & ha_statistical_table$lfc_ha_group2 < 0, "Depleted",ha_statistical_table$association)
+
+volcano_plot <- ggplot(ha_statistical_table, aes(x = as.numeric(lfc_ha_group2), y = -log10(as.numeric(q_ha_group2)), color = association)) +
+  geom_point() +
+  labs(x = "Log2 Fold Change", y = "-log10(p-value)",
+       title = "Volcano Plot") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+  theme_bw()
+
+
+volcano_plot
+```
