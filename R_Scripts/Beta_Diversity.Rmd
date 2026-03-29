@@ -25,7 +25,8 @@ table(sample_sums(psrare))
 
 ```
 
-#Step 2) \### Caclculate the beta diversity using the Bray-Curtis distance matrix.
+#Step 2) 
+### Caclculate the beta diversity using the Bray-Curtis distance matrix.
 
 ```{r calculate bray-curtis distances}
 # Calculate the distance between each sample pair
@@ -33,7 +34,8 @@ ps_WUF <- phyloseq::distance(psrare, method = "wunifrac")
 View(as.matrix(ps_WUF)) # Every pairwise comparison included
 ```
 
-#Step 3) \### use Multidimensional scaling to reduce the distance matrix into fewer dimentions which will help plot abd understand the Data.
+#Step 3) 
+### use Multidimensional scaling to reduce the distance matrix into fewer dimentions which will help plot abd understand the Data.
 
 ```{r normalize and plot}
 # MDS scaling
@@ -46,7 +48,8 @@ mds_data = mds$points %>% as.data.frame %>%
 head(mds_data)
 ```
 
-#Step 4) \### Plot the data based on the following comparisons, different HA/NA subtypes, different HA subtypes, different NA subtypes, finally Infected Vs non infection comparison.
+#Step 4) 
+### Plot the data based on the following comparisons, different HA/NA subtypes, different HA subtypes, different NA subtypes, finally Infected Vs non infection comparison.
 
 ```{r}
 
