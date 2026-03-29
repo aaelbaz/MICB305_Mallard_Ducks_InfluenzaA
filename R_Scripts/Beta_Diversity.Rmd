@@ -1,0 +1,172 @@
+---
+title: "Beta Diversity Final project"
+author: "Soroush_Torfehnejad"
+date: "2026-03-29"
+output: html_document
+---
+
+# Step 1)
+
+### Load libraries and Data, I rarefied the data based on the conclusions we came to when looking at the QUIME results.The rarefaction number is 5396
+
+```{r Load data and libraries}
+library(tidyverse)
+library(phyloseq)
+library(vegan)
+# Load object
+ps <- readRDS('../processed_data/phyloseq_taxonomy.rds')
+
+
+# rarefy the data:
+psrare <- ps|>
+          rarefy_even_depth(sample.size = 5396, rngseed = 421)
+table(sample_sums(psrare))
+
+
+```
+
+#Step 2) \### Caclculate the beta diversity using the Bray-Curtis distance matrix.
+
+```{r calculate bray-curtis distances}
+# Calculate the distance between each sample pair
+ps_WUF <- phyloseq::distance(psrare, method = "wunifrac")
+View(as.matrix(ps_WUF)) # Every pairwise comparison included
+```
+
+#Step 3) \### use Multidimensional scaling to reduce the distance matrix into fewer dimentions which will help plot abd understand the Data.
+
+```{r normalize and plot}
+# MDS scaling
+set.seed(421)
+mds = metaMDS(ps_WUF)
+
+# Extract data
+mds_data = mds$points %>% as.data.frame %>%
+  merge(sample_data(psrare), by='row.names', sort=F)
+head(mds_data)
+```
+
+#Step 4) \### Plot the data based on the following comparisons, different HA/NA subtypes, different HA subtypes, different NA subtypes, finally Infected Vs non infection comparison.
+
+```{r}
+
+# looking at Beta diversity differences between HA group 1, group 2 and negative control
+
+plot_HA_G1_VS_G2_VS_neg<- mds_data %>%
+                  ggplot(aes(MDS1,MDS2,color = ha_group)) +
+                  geom_point() +
+                  stat_ellipse() +
+                  theme_classic(base_size=18)
+
+
+
+# looking at Beta diversity differences between HA group 1 and group 2
+plot_HA_G1_VS_G2<- mds_data %>%
+                  filter(ha_group != "neg") %>% 
+                  ggplot(aes(MDS1,MDS2,color = ha_group)) +
+                  geom_point() +
+                  stat_ellipse() +
+                  theme_classic(base_size=18)
+
+
+# looking at Beta diversity differences between HA group 1 and uninfected
+plot_HA_G1_VS_NEG<- mds_data %>%
+                  filter(ha_group != "2") %>% 
+                  ggplot(aes(MDS1,MDS2,color = ha_group)) +
+                  geom_point() +
+                  stat_ellipse() +
+                  theme_classic(base_size=18)
+
+# looking at Beta diversity differences between HA group 2 and uninfected
+plot_HA_G2_VS_NEG<- mds_data %>%
+                  filter(ha_group != "1") %>% 
+                  ggplot(aes(MDS1,MDS2,color = ha_group)) +
+                  geom_point() +
+                  stat_ellipse() +
+                  theme_classic(base_size=18)
+
+plot_HA_G1_VS_G2_VS_neg
+
+plot_HA_G1_VS_G2
+
+plot_HA_G1_VS_NEG
+
+plot_HA_G2_VS_NEG
+```
+
+#Step 5)
+
+### Perform a PERMANOVA test to find statistical significance between the groups using an Adonis function.
+
+```{r}
+metadata <- sample_data(psrare) %>% data.frame() # to make the next lines easier
+
+
+set.seed(421)
+# Single variable anova 
+
+Permanova_on_HA_groups <- adonis2(ps_WUF ~ ha_group, data = metadata, permutations = 99999)
+
+Permanova_on_HA_groups
+
+# when observing if their is a difference in the Beta diversity between Group 1,2 or negative control statistical significance was seen p= 0.02326
+
+
+#this statistical significance led to us comparing each individual group within the ha_group column: group1 vs group 2 vs uninfected
+
+
+# Comparing HA G1 Vs G2 using PERMANOVA 
+compare_G1_vs_G2 = c('2','1')
+
+# Correct the data to make them have the same size when comparing G1 Vs G2
+keep_G1_vs_G2 = metadata %>% filter(ha_group %in% compare_G1_vs_G2) %>% rownames()
+
+
+ps_WUF_G1_vs_G2 = as.matrix(ps_WUF)[keep_G1_vs_G2,keep_G1_vs_G2] %>% as.dist()
+
+# Run a PERMANOVA on G1 vs G2
+Permanova_G1_vs_G2 = adonis2(ps_WUF_G1_vs_G2 ~ ha_group,
+                       data = metadata %>% filter(ha_group %in% compare_G1_vs_G2), permutations = 99999)
+
+Permanova_G1_vs_G2 
+
+# This one showed no significance p= 0.3286 indcation no differences between the beta diversity of G1 vs G2
+
+# Comparing HA G1 Vs Neg using PERMANOVA 
+compare_G1_vs_neg = c('neg','1')
+
+# Correct the data to make them have the same size when comparing G1 Vs neg
+keep_G1_vs_neg = metadata %>% filter(ha_group %in% compare_G1_vs_neg) %>% rownames()
+
+
+ps_WUF_G1_vs_neg = as.matrix(ps_WUF)[keep_G1_vs_neg,keep_G1_vs_neg] %>% as.dist()
+
+# Run a PERMANOVA on G1 vs neg
+Permanova_G1_vs_neg = adonis2(ps_WUF_G1_vs_neg ~ ha_group,
+                       data = metadata %>% filter(ha_group %in% compare_G1_vs_neg), permutations = 99999)
+
+Permanova_G1_vs_neg 
+
+
+# This one showed no significance p= 0.09864 indcation no differences between the beta diversity of G1 vs neg
+
+
+# Comparing HA G2 Vs Neg using PERMANOVA 
+compare_G2_vs_neg = c('neg','2')
+
+# Correct the data to make them have the same size when comparing G2 Vs neg
+keep_G2_vs_neg = metadata %>% filter(ha_group %in% compare_G2_vs_neg) %>% rownames()
+
+
+ps_WUF_G2_vs_neg = as.matrix(ps_WUF)[keep_G2_vs_neg,keep_G2_vs_neg] %>% as.dist()
+
+# Run a PERMANOVA on G2 vs neg
+Permanova_G2_vs_neg = adonis2(ps_WUF_G2_vs_neg ~ ha_group,
+                       data = metadata %>% filter(ha_group %in% compare_G2_vs_neg), permutations = 99999)
+
+Permanova_G2_vs_neg 
+
+# This one showed no significance p= 0.0142 indcation a statisticaly significant differences between the beta diversity of G2 vs neg. This indicates that group 2 HA influenza viruses may have a stronger affect in changing the beta diversity of the coacle microbiome. 
+
+
+```
