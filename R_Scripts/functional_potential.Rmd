@@ -13,11 +13,15 @@ library(tidyverse)
 library(phyloseq)
 library(ggpicrust2)
 library(devtools)
-install_github("zhouhj1994/LinDA")
+install_github("biobakery/maaslin2")
 
-# A modified ggpicrust2 errorbar function from the MICB 305 2025W2 GitHub is used within this script (import below).
+# A log2 fold change calculation function alongside a modified ggpicrust2 errorbar function, both from the MICB 305 2025W2 GitHub, are used within this script (imports below).
 # This code is attributed to the creators of the MICB 305 2025W2 GitHub and is cited within our research paper.
+source('reference_functions/ggpicrust2_calculate_log2fc.R')
 source('reference_functions/ggpicrust2_errorbar_function_fixed.R')
+
+# Some internal functions appear inaccessible in ggpicrust2, so I am importing the internal functions separately for now
+source('reference_functions/data_utils.R')
 ```
 
 ## 2. Load Data
@@ -25,7 +29,9 @@ source('reference_functions/ggpicrust2_errorbar_function_fixed.R')
 Functional annotations were generated via command-line PICRUSt2 and then exported into this project under the `../processed_data/` directory.
 
 ```{r}
-metadata = read.delim('../processed_data/metadata_processed.tsv')
+metadata = data.frame(readRDS('../processed_data/phyloseq_taxonomy.rds')@sam_data) %>%
+  rownames_to_column()
+
 metacyc_path_abun = read.delim('../processed_data/path_abun_unstrat.tsv', row.names = 1)
 ```
 
@@ -37,29 +43,39 @@ set.seed(1234)
 
 ## 4. Conduct Functional Potential Analysis (via ggpicrust2)
 
-This analysis examines differences in predicted functional potential between infected and uninfected mallards.
+This analysis examines differences in predicted functional potential between HA group 1 and HA group 2 influenza-infected mallards.
 
 ```{r}
-# Rename and order groups appropriately so the downstream figure is more interpretable
-metadata$influenza_status = replace_values(metadata$influenza_status, from = "Pos", to = "infected") %>%
-  replace_values(from = "Neg", to = "uninfected") %>%
-  factor(levels = c("infected", "uninfected"))
+# Filter out uninfected samples and rename groups so downstream figure is more interpretable
+metadata = filter(metadata, ha_group != "neg")
+metadata$ha_group = paste("ha_group", metadata$ha_group, sep="_")
 
-# Run pathway differential abundance analysis (LinDA method)
+metacyc_path_abun = metacyc_path_abun[, colnames(metacyc_path_abun) %in% metadata$rowname]
+
+
+# Run pathway differential abundance analysis (Maaslin2 method)
 daa_df = pathway_daa(abundance = metacyc_path_abun,
                      metadata = metadata,
-                     group = "influenza_status",
-                     daa_method = "LinDA",
+                     group = "ha_group",
+                     daa_method = "Maaslin2",
                      select = NULL,
                      reference = NULL)
+
+# Get correct log2 fold change values; currently, pathway_daa using the Maaslin2 method uses incorrect log2 fold changes.
+log2_fc = fix_lfc(abundance = metacyc_path_abun,
+                  metadata = metadata,
+                  group = "ha_group",
+                  reference = "ha_group_2") %>%
+  select(feature, log2_fold_change)
+
+# Add correct log2 fold change values to the differential abundance analysis data frame
+daa_df = left_join(daa_df, log2_fc, by="feature")
 
 # Add pathway annotations
 daa_annotated_df = pathway_annotation(pathway = "MetaCyc", daa_results_df = daa_df)
 ```
 
-## 5. Generate Figure (Bar plot showing significant pathways)
-
-Of note, an adjusted p-value cutoff of \< 0.001 and absolute log2 fold change cutoff of \>= 2.5 was applied in order to highlight the most significant results while maintaining figure readability.
+## 5. Generate Figure (Bar plot with most significant pathways)
 
 ```{r}
 # Create column containing both pathway names & annotations
@@ -67,12 +83,12 @@ daa_annotated_df = daa_annotated_df %>%
   mutate(label = paste(feature, ifelse(is.na(description), "No description available", description), sep = "; "))
 
 # Filter for significant results
-daa_annotated_df_filt = filter(daa_annotated_df, abs(log2FoldChange) >= 2.5 & p_adjust < 0.001)
+daa_annotated_df_filt = filter(daa_annotated_df, abs(log2_fold_change) >= 4)# & p_adjust < 0.05)
 
 # Generate pathway errorbar plot
 peb = pathway_errorbar_fixed(abundance = metacyc_path_abun,
                              daa_results_df = daa_annotated_df_filt,
-                             Group = metadata$influenza_status,
+                             Group = metadata$ha_group,
                              order_by_log = TRUE,
                              ko_to_kegg = FALSE,
                              p_value_bar = TRUE,
