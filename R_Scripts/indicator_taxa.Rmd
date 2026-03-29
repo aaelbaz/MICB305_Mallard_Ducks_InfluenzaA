@@ -20,19 +20,9 @@ library(gridExtra)
 
 ## 2. Load Data
 
-For the purposes of this analysis, we deemed it appropriate analyze HA & NA groups separately. Additionally, to increase statistical power (given our small sample size), we decided to aggregate sub-subtypes to subtypes (i.e., H5.2 --\> H5, N3.2 --\> N3, etc.).
-
 ```{r}
 # Read in phyloseq object
 ps = readRDS('../processed_data/phyloseq_taxonomy.rds')
-
-# Mutate metadata as described above
-new_metadata = data.frame(ps@sam_data) %>%
-  mutate(ha_subtype = str_extract(ha_subtype, "^[^.]+")) %>%
-  mutate(na_subtype = str_extract(na_subtype, "^[^.]+"))
-
-# Insert mutated metadata into the phyloseq object
-ps@sam_data = sample_data(new_metadata)
 ```
 
 ## 3. Set Seed & Prepare Data for Analyses
@@ -51,18 +41,27 @@ ps_filt = tax_glom(ps, "Genus") %>%
 
 ## 4. Conduct Indicator Taxa Analysis (via indicpecies package)
 
+An indicator value of \> 0.7 and p-value of \< 0.05 were considered as the thresholds for significance.
+
 ```{r}
-# Conduct indicator taxa analysis for HA groups & filter results for stat & p-value cutoffs
-ita_ha = multipatt(t(otu_table(ps_filt)), 
-                       cluster = sample_data(ps_filt)$ha_subtype,
+# Conduct indicator taxa analysis by HA group & filter results for stat & p-value cutoffs
+ita_ha_grp = multipatt(t(otu_table(ps_filt)), 
+                       cluster = sample_data(ps_filt)$ha_group,
+                       control = how(nperm = 999))$sign %>%
+  as.data.frame(.) %>%
+  filter(stat > 0.7 & p.value < 0.05)
+
+# Conduct indicator taxa analysis by HA subtype & filter results for stat & p-value cutoffs
+ita_ha_stp = multipatt(t(otu_table(ps_filt)), 
+                       cluster = sample_data(ps_filt)$ha_aggr,
                        control = how(nperm = 999))$sign %>%
   as.data.frame(.) %>%
   filter(stat > 0.7 & p.value < 0.05)
 
 
-# Conduct indicator taxa analysis for NA groups & filter results for stat & p-value cutoffs
+# Conduct indicator taxa analysis by NA subtype & filter results for stat & p-value cutoffs
 ita_na = multipatt(t(otu_table(ps_filt)), 
-                       cluster = sample_data(ps_filt)$na_subtype,
+                       cluster = sample_data(ps_filt)$na_aggr,
                        control = how(nperm = 999))$sign %>%
   as.data.frame(.) %>%
   filter(stat > 0.7 & p.value < 0.05)
@@ -70,25 +69,54 @@ ita_na = multipatt(t(otu_table(ps_filt)),
 
 ## 5. Generate Indicator Taxa Summary Tables for HA & NA Analyses
 
-The tables are organized such that each row corresponds to an indicator genus. The values of the columns H2-H5 (or N1-N9 excluding N4) and neg represent whether the given genus is an indicator for that group (1) or not (0). Additionally, the tables are filtered to only include significant results (p \< 0.05 & stat \> 0.7).
+The tables are organized such that each row corresponds to an indicator genus. The values of the columns ha_group_1 and ha_group_2, H2-H5, N1-N9 excluding N4, and neg represent whether the given genus is an indicator for that group (1) or not (0). Additionally, the tables are filtered to only include significant results (p \< 0.05 & stat \> 0.7).
 
-### 5.1 HA Table
+### 5.1 HA Group Table
 
 ```{r}
 # Get indicator genera names from indicator genera ASVs
-indicator_genera_ha = data.frame(ps_filt@tax_table) %>%
+indicator_genera_ha_grp = data.frame(ps_filt@tax_table) %>%
   rownames_to_column() %>%
-  filter(rowname %in% rownames(ita_ha)) %>%
+  filter(rowname %in% rownames(ita_ha_grp)) %>%
   select(rowname, Genus)
-indicator_genera_ha$Genus = indicator_genera_ha$Genus %>% str_replace("g__", "")
+indicator_genera_ha_grp$Genus = indicator_genera_ha_grp$Genus %>% str_replace("g__", "")
 
 # Generate summary table
-ita_summary_ha = ita_ha %>%
+ita_summary_ha_grp = ita_ha_grp %>%
   rownames_to_column() %>%
-  left_join(indicator_genera_ha)
+  left_join(indicator_genera_ha_grp)
 
 # Format summary table for ease of interpretation
-ita_summary_ha_formatted = ita_summary_ha %>%
+ita_summary_ha_formatted_grp = ita_summary_ha_grp %>%
+  rename(ha_group_1 = "s.1", ha_group_2 = "s.2", neg = "s.neg") %>%
+  select(-index, -rowname) %>%
+  relocate(stat, .after = last_col()) %>%
+  relocate(p.value, .before = stat) %>%
+  relocate(Genus, .before = ha_group_1) %>%
+  mutate(stat = round(stat, 3)) %>%
+  rename(indicator_value = stat, p_value = p.value)
+
+# Display formatted summary table
+ita_summary_ha_formatted_grp
+```
+
+### 5.2 HA Subtype Table
+
+```{r}
+# Get indicator genera names from indicator genera ASVs
+indicator_genera_ha_stp = data.frame(ps_filt@tax_table) %>%
+  rownames_to_column() %>%
+  filter(rowname %in% rownames(ita_ha_stp)) %>%
+  select(rowname, Genus)
+indicator_genera_ha_stp$Genus = indicator_genera_ha_stp$Genus %>% str_replace("g__", "")
+
+# Generate summary table
+ita_summary_ha_stp = ita_ha_stp %>%
+  rownames_to_column() %>%
+  left_join(indicator_genera_ha_stp)
+
+# Format summary table for ease of interpretation
+ita_summary_ha_formatted_stp = ita_summary_ha_stp %>%
   rename(H2 = "s.2", H3 = "s.3", H4 = "s.4", H5 = "s.5", neg = "s.neg") %>%
   select(-index, -rowname) %>%
   relocate(stat, .after = last_col()) %>%
@@ -98,10 +126,10 @@ ita_summary_ha_formatted = ita_summary_ha %>%
   rename(indicator_value = stat, p_value = p.value)
 
 # Display formatted summary table
-ita_summary_ha_formatted
+ita_summary_ha_formatted_stp
 ```
 
-### 5.2 NA Table
+### 5.3 NA Subtype Table
 
 ```{r}
 # Get indicator genera names from indicator genera ASVs
@@ -134,8 +162,12 @@ ita_summary_na_formatted
 ### 5.4 Save HA & NA Tables
 
 ```{r}
-pdf("../visualizations/tables/ita_ha_summary.pdf", paper = "USr")
-grid.table(ita_summary_ha_formatted, theme = ttheme_default(base_size = 8), rows = NULL)
+pdf("../visualizations/tables/ita_ha_grp_summary.pdf", paper = "USr")
+grid.table(ita_summary_ha_formatted_grp, theme = ttheme_default(base_size = 8), rows = NULL)
+dev.off()
+
+pdf("../visualizations/tables/ita_ha_stp_summary.pdf", paper = "USr")
+grid.table(ita_summary_ha_formatted_stp, theme = ttheme_default(base_size = 8), rows = NULL)
 dev.off()
 
 pdf("../visualizations/tables/ita_na_summary.pdf", paper = "USr")
