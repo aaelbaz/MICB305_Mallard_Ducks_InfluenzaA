@@ -393,19 +393,9 @@ library(picante)</code></pre>
 ##     collapse</code></pre>
 <pre class="r"><code>library(ape)
 library(dunn.test)</code></pre>
-<pre class="r"><code>metadata = read.delim(&quot;duck_flu_metadata_wrangled.tsv&quot;, row.names = 1) 
-taxonomy = read.delim(&#39;taxonomy.tsv&#39;, row.names = 1) 
-counts = read.delim(&#39;feature-table.txt&#39;, skip=1, row.names=1)  
-tree = read_tree(&quot;tree.nwk&quot;)</code></pre>
-<pre class="r"><code>taxonomy_formatted = taxonomy %&gt;% 
-  separate(col = Taxon, 
-           into = c(&quot;Domain&quot;, &quot;Phylum&quot;, &quot;Class&quot;, &quot;Order&quot;, &quot;Family&quot;, &quot;Genus&quot;, &quot;Species&quot;), sep = &quot;;&quot;, fill = &quot;right&quot;) %&gt;% 
-  select(-Confidence) %&gt;% 
-  as.matrix()
+<pre class="r"><code>#Importing processed phyloseq object from generate_phyloseq.Rmd
 
-counts_formatted = counts %&gt;% as.matrix()
-
-ps = phyloseq(sample_data(metadata), otu_table(counts_formatted, taxa_are_rows =T), tax_table(taxonomy_formatted), tree)</code></pre>
+ps &lt;- readRDS(&#39;../processed_data/phyloseq_taxonomy.rds&#39;)</code></pre>
 <pre class="r"><code>psrare= ps %&gt;% rarefy_even_depth(sample.size = 5396, rngseed = 360)</code></pre>
 <pre><code>## `set.seed(360)` was used to initialize repeatable random subsampling.</code></pre>
 <pre><code>## Please record this for your records so others can reproduce.</code></pre>
@@ -420,6 +410,7 @@ ps = phyloseq(sample_data(metadata), otu_table(counts_formatted, taxa_are_rows =
 <pre><code>## ...</code></pre>
 <pre class="r"><code>#The rarefraction depth was decided based on qiime 2 outputs </code></pre>
 <p>Shannon’s Diversity Index</p>
+<p>HA and NA</p>
 <pre class="r"><code>set.seed(360)
 p = plot_richness(psrare, x=&quot;HA_NA&quot;,
                         measures = c(&quot;Shannon&quot;),
@@ -636,6 +627,122 @@ res_sig_HA &lt;-dunn.test(df_HA_shannon$value, df_HA_shannon$ha_subtype, kw=TRUE
   subtype_comparison = res_sig_HA$comparisons,
   p_adjusted = res_sig_HA$P.adjusted
 )</code></pre>
+<p>NA_subtype Aggregated</p>
+<pre class="r"><code>set.seed(360)
+p_NA_aggr_shannon = plot_richness(psrare, x=&quot;na_aggr&quot;,
+                        measures = c(&quot;Shannon&quot;),
+                  color= &quot;na_aggr&quot;)
+
+pdata_NA_aggr_shannon = p_NA_aggr_shannon$data</code></pre>
+<pre class="r"><code>df_NA_aggr_shannon &lt;- data.frame(na_aggr = as.factor(pdata_NA_aggr_shannon$na_aggr), value = pdata_NA_aggr_shannon$value)
+#Kruskal-Wallis and Dunn&#39;s test as post-hoc
+res_sig_aggr_NA &lt;-dunn.test(df_NA_aggr_shannon$value, df_NA_aggr_shannon$na_aggr, kw=TRUE, method = &quot;bh&quot;)</code></pre>
+<pre><code>##   Kruskal-Wallis rank sum test
+## 
+## data: x and group
+## Kruskal-Wallis chi-squared = 11.3628, df = 7, p-value = 0.12
+## 
+## 
+##                    Dunn&#39;s Pairwise Comparison of x by group                   
+##                              (Benjamini-Hochberg)                             
+## Col Mean-│
+## Row Mean │          1          2          3          5          6          8
+## ─────────┼──────────────────────────────────────────────────────────────────
+##        2 │   0.252983
+##          │     0.4309 
+##          │
+##        3 │  -0.304417  -0.654656
+##          │     0.4438     0.3778 
+##          │
+##        5 │   0.255442   0.029474   0.615407
+##          │     0.4471     0.4882     0.3768 
+##          │
+##        6 │   1.030152   1.035929   1.524398   0.860066
+##          │     0.3856     0.4203     0.3567     0.3638 
+##          │
+##        8 │  -0.448715  -0.906930  -0.126977  -0.821191  -1.928788
+##          │     0.4160     0.3925     0.4661     0.3389     0.3763 
+##          │
+##        9 │  -1.054673  -1.221326  -0.919025  -1.208440  -1.582475  -0.884332
+##          │     0.4536     0.4439     0.4178     0.3970     0.3974     0.3765 
+##          │
+##      neg │  -0.830513  -1.611304  -0.513434  -1.353321  -2.962649  -0.444266
+##          │     0.3555     0.4999     0.4051     0.4106     0.0427     0.3998 
+## Col Mean-│
+## Row Mean │          9
+## ─────────┼───────────
+##      neg │   0.767627
+##          │     0.3443 
+## 
+## FDR = 0.05
+## Reject Ho if p ≤ FDR/2 with stopping rule, where p = Pr(Z ≥ |z|)</code></pre>
+<pre class="r"><code>#one significant group</code></pre>
+<p>HA_subtype Aggregrated</p>
+<pre class="r"><code>set.seed(360)
+p_HA_aggr_shannon = plot_richness(psrare, x=&quot;ha_aggr&quot;,
+                        measures = c(&quot;Shannon&quot;),
+                  color= &quot;ha_aggr&quot;)
+
+pdata_HA_aggr_shannon = p_HA_aggr_shannon$data</code></pre>
+<pre class="r"><code>df_HA_aggr_shannon &lt;- data.frame(ha_aggr = as.factor(pdata_HA_aggr_shannon$ha_aggr), value = pdata_HA_aggr_shannon$value)
+#Kruskal-Wallis and Dunn&#39;s test as post-hoc
+res_sig_aggr_HA &lt;-dunn.test(df_HA_aggr_shannon$value, df_HA_aggr_shannon$ha_aggr, kw=TRUE, method = &quot;bh&quot;)</code></pre>
+<pre><code>##   Kruskal-Wallis rank sum test
+## 
+## data: x and group
+## Kruskal-Wallis chi-squared = 9.4625, df = 4, p-value = 0.05
+## 
+## 
+##                    Dunn&#39;s Pairwise Comparison of x by group                   
+##                              (Benjamini-Hochberg)                             
+## Col Mean-│
+## Row Mean │          2          3          4          5
+## ─────────┼────────────────────────────────────────────
+##        3 │  -0.190022
+##          │     0.4246 
+##          │
+##        4 │   1.093965   1.508520
+##          │     0.2740     0.2190 
+##          │
+##        5 │   0.851938   1.235489  -0.360927
+##          │     0.3285     0.2708     0.3990 
+##          │
+##      neg │  -0.604580  -0.447709  -2.646869  -2.305994
+##          │     0.3896     0.4090     0.0406     0.0528 
+## 
+## FDR = 0.05
+## Reject Ho if p ≤ FDR/2 with stopping rule, where p = Pr(Z ≥ |z|)</code></pre>
+<pre class="r"><code>#one significant group</code></pre>
+<p>HA Phylogenetic Groups</p>
+<pre class="r"><code>set.seed(360)
+p_HA_group_shannon = plot_richness(psrare, x=&quot;ha_group&quot;,
+                        measures = c(&quot;Shannon&quot;),
+                  color= &quot;ha_group&quot;)
+
+pdata_HA_group_shannon = p_HA_group_shannon$data</code></pre>
+<pre class="r"><code>df_HA_group_shannon &lt;- data.frame(ha_group = as.factor(pdata_HA_group_shannon$ha_group), value = pdata_HA_group_shannon$value)
+#Kruskal-Wallis and Dunn&#39;s test as post-hoc
+res_sig_group_HA &lt;-dunn.test(df_HA_group_shannon$value, df_HA_group_shannon$ha_group, kw=TRUE, method = &quot;bh&quot;)</code></pre>
+<pre><code>##   Kruskal-Wallis rank sum test
+## 
+## data: x and group
+## Kruskal-Wallis chi-squared = 6.461, df = 2, p-value = 0.04
+## 
+## 
+##                    Dunn&#39;s Pairwise Comparison of x by group                   
+##                              (Benjamini-Hochberg)                             
+## Col Mean-│
+## Row Mean │          1          2
+## ─────────┼──────────────────────
+##        2 │   0.022714
+##          │     0.4909 
+##          │
+##      neg │  -2.142996  -2.200080
+##          │     0.0241*    0.0417*
+## 
+## FDR = 0.05
+## Reject Ho if p ≤ FDR/2 with stopping rule, where p = Pr(Z ≥ |z|)</code></pre>
+<pre class="r"><code>#Two significant groups</code></pre>
 <p>Faith’s Diversity</p>
 <pre class="r"><code># Setup ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # taxa must be columns instead of rows, this will convert it if needed
@@ -831,6 +938,103 @@ faith_HA_sig &lt;- dunn.test(faith_HA_df$value, faith_HA_df$ha_subtype, kw=TRUE,
 ##          │
 ##      neg │  -1.693904  -1.379149   0.488896  -2.698465  -2.315991
 ##          │     0.2257     0.3147     0.4687     0.0522     0.0771 
+## 
+## FDR = 0.05
+## Reject Ho if p ≤ FDR/2 with stopping rule, where p = Pr(Z ≥ |z|)</code></pre>
+<p>NA Subtype Aggregated</p>
+<pre class="r"><code>faith_NA_aggr_df &lt;- data.frame(na_aggr = as.factor(faith_metadata$na_aggr), 
+                                                 value = faith_metadata$PD)
+faith_NA_aggr_sig &lt;- dunn.test(faith_NA_aggr_df$value, faith_NA_aggr_df$na_aggr, kw=TRUE, method = &quot;bh&quot;)</code></pre>
+<pre><code>##   Kruskal-Wallis rank sum test
+## 
+## data: x and group
+## Kruskal-Wallis chi-squared = 14.1959, df = 7, p-value = 0.05
+## 
+## 
+##                    Dunn&#39;s Pairwise Comparison of x by group                   
+##                              (Benjamini-Hochberg)                             
+## Col Mean-│
+## Row Mean │          1          2          3          5          6          8
+## ─────────┼──────────────────────────────────────────────────────────────────
+##        2 │   0.750375
+##          │     0.4530 
+##          │
+##        3 │   0.345165  -0.402137
+##          │     0.5379     0.5348 
+##          │
+##        5 │   0.189944  -0.622232  -0.177606
+##          │     0.5405     0.4671     0.5229 
+##          │
+##        6 │   0.307891  -0.610482  -0.093776   0.111818
+##          │     0.5307     0.4460     0.4798     0.4905 
+##          │
+##        8 │   0.174321  -0.729496  -0.223374  -0.032455  -0.163307
+##          │     0.5026     0.4347     0.5488     0.4871     0.4874 
+##          │
+##        9 │  -1.524483  -1.945298  -1.728207  -1.657102  -1.742321  -1.669638
+##          │     0.1621     0.2414     0.1959     0.1517     0.2281     0.1662 
+##          │
+##      neg │  -1.098311  -2.798632  -1.725829  -1.577532  -2.176121  -1.781369
+##          │     0.2930     0.0718     0.1688     0.1605     0.2068     0.2620 
+## Col Mean-│
+## Row Mean │          9
+## ─────────┼───────────
+##      neg │   1.153634
+##          │     0.2901 
+## 
+## FDR = 0.05
+## Reject Ho if p ≤ FDR/2 with stopping rule, where p = Pr(Z ≥ |z|)</code></pre>
+<pre class="r"><code>#Kruskal Wallis of 0.05 but no observed significant pairs</code></pre>
+<p>HA Subtype Aggregated</p>
+<pre class="r"><code>faith_HA_aggr_df &lt;- data.frame(ha_aggr = as.factor(faith_metadata$ha_aggr), 
+                                                 value = faith_metadata$PD)
+faith_HA_aggr_sig &lt;- dunn.test(faith_HA_aggr_df$value, faith_HA_aggr_df$ha_aggr, kw=TRUE, method = &quot;bh&quot;)</code></pre>
+<pre><code>##   Kruskal-Wallis rank sum test
+## 
+## data: x and group
+## Kruskal-Wallis chi-squared = 9.9282, df = 4, p-value = 0.04
+## 
+## 
+##                    Dunn&#39;s Pairwise Comparison of x by group                   
+##                              (Benjamini-Hochberg)                             
+## Col Mean-│
+## Row Mean │          2          3          4          5
+## ─────────┼────────────────────────────────────────────
+##        3 │  -0.584247
+##          │     0.4659 
+##          │
+##        4 │   0.095127   0.864103
+##          │     0.4621     0.3875 
+##          │
+##        5 │  -0.183244   0.551832  -0.398920
+##          │     0.4748     0.4150     0.4312 
+##          │
+##      neg │  -1.693904  -1.182283  -2.698465  -2.315991
+##          │     0.1505     0.2964     0.0348     0.0514 
+## 
+## FDR = 0.05
+## Reject Ho if p ≤ FDR/2 with stopping rule, where p = Pr(Z ≥ |z|)</code></pre>
+<pre class="r"><code>#one significant group</code></pre>
+<p>HA Phylogenetic Groups</p>
+<pre class="r"><code>faith_HA_group_df &lt;- data.frame(ha_group = as.factor(faith_metadata$ha_group), 
+                                                 value = faith_metadata$PD)
+faith_HA_group_sig &lt;- dunn.test(faith_HA_group_df$value, faith_HA_group_df$ha_group, kw=TRUE, method = &quot;bh&quot;)</code></pre>
+<pre><code>##   Kruskal-Wallis rank sum test
+## 
+## data: x and group
+## Kruskal-Wallis chi-squared = 9.148, df = 2, p-value = 0.01
+## 
+## 
+##                    Dunn&#39;s Pairwise Comparison of x by group                   
+##                              (Benjamini-Hochberg)                             
+## Col Mean-│
+## Row Mean │          1          2
+## ─────────┼──────────────────────
+##        2 │  -0.026535
+##          │     0.4894 
+##          │
+##      neg │  -2.578359  -2.590644
+##          │     0.0074*    0.0144*
 ## 
 ## FDR = 0.05
 ## Reject Ho if p ≤ FDR/2 with stopping rule, where p = Pr(Z ≥ |z|)</code></pre>

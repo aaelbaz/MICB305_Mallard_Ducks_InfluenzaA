@@ -18,30 +18,20 @@ library(dunn.test)
 
 
 ```{r}
-metadata = read.delim("duck_flu_metadata_wrangled.tsv", row.names = 1) 
-taxonomy = read.delim('taxonomy.tsv', row.names = 1) 
-counts = read.delim('feature-table.txt', skip=1, row.names=1)  
-tree = read_tree("tree.nwk")
+#Importing processed phyloseq object from generate_phyloseq.Rmd
+
+ps <- readRDS('../processed_data/phyloseq_taxonomy.rds')
 
 ```
 
-```{r}
-taxonomy_formatted = taxonomy %>% 
-  separate(col = Taxon, 
-           into = c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species"), sep = ";", fill = "right") %>% 
-  select(-Confidence) %>% 
-  as.matrix()
-
-counts_formatted = counts %>% as.matrix()
-
-ps = phyloseq(sample_data(metadata), otu_table(counts_formatted, taxa_are_rows =T), tax_table(taxonomy_formatted), tree)
-```
 ```{r}
 psrare= ps %>% rarefy_even_depth(sample.size = 5396, rngseed = 360)
 
 #The rarefraction depth was decided based on qiime 2 outputs 
 ```
 Shannon's Diversity Index
+
+HA and NA
 ```{r}
 set.seed(360)
 p = plot_richness(psrare, x="HA_NA",
@@ -132,7 +122,62 @@ results_df_HA <- data.frame(
 )
 
 ```
+NA_subtype Aggregated 
+```{r}
+set.seed(360)
+p_NA_aggr_shannon = plot_richness(psrare, x="na_aggr",
+                        measures = c("Shannon"),
+                  color= "na_aggr")
 
+pdata_NA_aggr_shannon = p_NA_aggr_shannon$data
+
+```
+
+```{r}
+df_NA_aggr_shannon <- data.frame(na_aggr = as.factor(pdata_NA_aggr_shannon$na_aggr), value = pdata_NA_aggr_shannon$value)
+#Kruskal-Wallis and Dunn's test as post-hoc
+res_sig_aggr_NA <-dunn.test(df_NA_aggr_shannon$value, df_NA_aggr_shannon$na_aggr, kw=TRUE, method = "bh")
+
+#one significant group
+```
+HA_subtype Aggregrated 
+```{r}
+set.seed(360)
+p_HA_aggr_shannon = plot_richness(psrare, x="ha_aggr",
+                        measures = c("Shannon"),
+                  color= "ha_aggr")
+
+pdata_HA_aggr_shannon = p_HA_aggr_shannon$data
+
+```
+
+```{r}
+df_HA_aggr_shannon <- data.frame(ha_aggr = as.factor(pdata_HA_aggr_shannon$ha_aggr), value = pdata_HA_aggr_shannon$value)
+#Kruskal-Wallis and Dunn's test as post-hoc
+res_sig_aggr_HA <-dunn.test(df_HA_aggr_shannon$value, df_HA_aggr_shannon$ha_aggr, kw=TRUE, method = "bh")
+
+#one significant group
+
+```
+HA Phylogenetic Groups
+```{r}
+set.seed(360)
+p_HA_group_shannon = plot_richness(psrare, x="ha_group",
+                        measures = c("Shannon"),
+                  color= "ha_group")
+
+pdata_HA_group_shannon = p_HA_group_shannon$data
+
+```
+
+```{r}
+df_HA_group_shannon <- data.frame(ha_group = as.factor(pdata_HA_group_shannon$ha_group), value = pdata_HA_group_shannon$value)
+#Kruskal-Wallis and Dunn's test as post-hoc
+res_sig_group_HA <-dunn.test(df_HA_group_shannon$value, df_HA_group_shannon$ha_group, kw=TRUE, method = "bh")
+
+#Two significant groups
+
+```
 Faith's Diversity
 
 ```{r}
@@ -196,6 +241,34 @@ faith_HA_df <- data.frame(ha_subtype = as.factor(faith_metadata$ha_subtype),
                                                  value = faith_metadata$PD)
 faith_HA_sig <- dunn.test(faith_HA_df$value, faith_HA_df$ha_subtype, kw=TRUE, method = "bh")
 ```
+NA Subtype Aggregated 
+ 
+```{r}
+faith_NA_aggr_df <- data.frame(na_aggr = as.factor(faith_metadata$na_aggr), 
+                                                 value = faith_metadata$PD)
+faith_NA_aggr_sig <- dunn.test(faith_NA_aggr_df$value, faith_NA_aggr_df$na_aggr, kw=TRUE, method = "bh")
+
+#Kruskal Wallis of 0.05 but no observed significant pairs
+```
+HA Subtype Aggregated 
+ 
+```{r}
+faith_HA_aggr_df <- data.frame(ha_aggr = as.factor(faith_metadata$ha_aggr), 
+                                                 value = faith_metadata$PD)
+faith_HA_aggr_sig <- dunn.test(faith_HA_aggr_df$value, faith_HA_aggr_df$ha_aggr, kw=TRUE, method = "bh")
+
+#one significant group
+```
+ 
+HA Phylogenetic Groups
+
+```{r}
+faith_HA_group_df <- data.frame(ha_group = as.factor(faith_metadata$ha_group), 
+                                                 value = faith_metadata$PD)
+faith_HA_group_sig <- dunn.test(faith_HA_group_df$value, faith_HA_group_df$ha_group, kw=TRUE, method = "bh")
+```
+
+ 
  
 
 
