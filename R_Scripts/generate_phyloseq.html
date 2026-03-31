@@ -380,16 +380,39 @@ tree = read_tree(&quot;../processed_data/tree.nwk&quot;)</code></pre>
 <div id="wrangle-metadata-i.e.-create-the-groupings-used-for-analysis" class="section level2">
 <h2>3. Wrangle Metadata (i.e., create the groupings used for
 analysis)</h2>
+<p>For the purposes of our analyses, we deemed it appropriate analyze HA
+&amp; NA groups separately. Additionally, given the small sample size of
+our data, we deemed it most appropriate to aggregate HA and NA groups as
+follows:</p>
+<ul>
+<li><p>Both HA &amp; NA: Aggregate sub-subtypes to subtypes (i.e., H5.2
+–&gt; H5, N3.2 –&gt; N3, etc.).</p></li>
+<li><p>HA: Bucket subtypes into two groups based on protein phylogeny
+established in prior literature.</p></li>
+<li><p>NA: Bucket subtypes into two groups based on protein similarity
+established in prior literature.</p></li>
+</ul>
 <pre class="r"><code># HA Group 1 includes H1, H2, H5, H6, H8, H9, H11, H12, H13, &amp; H16
 ha_grp_1 = c(&quot;1&quot;, &quot;2&quot;, &quot;5&quot;, &quot;6&quot;, &quot;8&quot;, &quot;9&quot;, &quot;11&quot;, &quot;12&quot;, &quot;13&quot;, &quot;16&quot;)
 
 # HA Group 2 includes H3, H4, H7, H10, H14, &amp; H15
 ha_grp_2 = c(&quot;3&quot;, &quot;4&quot;, &quot;7&quot;, &quot;10&quot;, &quot;14&quot;, &quot;15&quot;)
 
+
+# NA Group 1 includes N1, N4, N5, &amp; N8
+na_grp_1 = c(&quot;1&quot;, &quot;4&quot;, &quot;5&quot;, &quot;8&quot;)
+
+# NA Group 2 includes N2, N3, N6, N7, &amp; N9
+na_grp_2 = c(&quot;2&quot;, &quot;3&quot;, &quot;6&quot;, &quot;7&quot;, &quot;9&quot;)
+
+
 metadata = metadata %&gt;%
   mutate(ha_aggr = str_extract(ha_subtype, &quot;^[^.]+&quot;)) %&gt;%
   mutate(na_aggr = str_extract(na_subtype, &quot;^[^.]+&quot;)) %&gt;%
-  mutate(ha_group = ifelse(ha_aggr %in% ha_grp_1, &quot;1&quot;, ifelse(ha_aggr %in% ha_grp_2, &quot;2&quot;, &quot;neg&quot;)))</code></pre>
+  mutate(ha_group = ifelse(ha_aggr %in% ha_grp_1, &quot;1&quot;,
+                           ifelse(ha_aggr %in% ha_grp_2, &quot;2&quot;, &quot;neg&quot;))) %&gt;%
+  mutate(na_group = ifelse(na_aggr %in% na_grp_1, &quot;1&quot;,
+                           ifelse(na_aggr %in% na_grp_2, &quot;2&quot;, &quot;neg&quot;)))</code></pre>
 </div>
 <div id="generate-phyloseq-object" class="section level2">
 <h2>4. Generate Phyloseq Object</h2>

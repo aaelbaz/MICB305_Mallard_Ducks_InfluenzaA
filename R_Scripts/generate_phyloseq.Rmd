@@ -29,6 +29,8 @@ For the purposes of our analyses, we deemed it appropriate analyze HA & NA group
 
 -   HA: Bucket subtypes into two groups based on protein phylogeny established in prior literature.
 
+-   NA: Bucket subtypes into two groups based on protein similarity established in prior literature.
+
 ```{r}
 # HA Group 1 includes H1, H2, H5, H6, H8, H9, H11, H12, H13, & H16
 ha_grp_1 = c("1", "2", "5", "6", "8", "9", "11", "12", "13", "16")
@@ -36,10 +38,21 @@ ha_grp_1 = c("1", "2", "5", "6", "8", "9", "11", "12", "13", "16")
 # HA Group 2 includes H3, H4, H7, H10, H14, & H15
 ha_grp_2 = c("3", "4", "7", "10", "14", "15")
 
+
+# NA Group 1 includes N1, N4, N5, & N8
+na_grp_1 = c("1", "4", "5", "8")
+
+# NA Group 2 includes N2, N3, N6, N7, & N9
+na_grp_2 = c("2", "3", "6", "7", "9")
+
+
 metadata = metadata %>%
   mutate(ha_aggr = str_extract(ha_subtype, "^[^.]+")) %>%
   mutate(na_aggr = str_extract(na_subtype, "^[^.]+")) %>%
-  mutate(ha_group = ifelse(ha_aggr %in% ha_grp_1, "1", ifelse(ha_aggr %in% ha_grp_2, "2", "neg")))
+  mutate(ha_group = ifelse(ha_aggr %in% ha_grp_1, "1",
+                           ifelse(ha_aggr %in% ha_grp_2, "2", "neg"))) %>%
+  mutate(na_group = ifelse(na_aggr %in% na_grp_1, "1",
+                           ifelse(na_aggr %in% na_grp_2, "2", "neg")))
 ```
 
 ## 4. Generate Phyloseq Object
