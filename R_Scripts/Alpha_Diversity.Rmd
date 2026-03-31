@@ -7,6 +7,8 @@ output: html_document
 #Loading the packages needed for Alpha diversity measures and statistical 
 #analysis. 
 
+
+
 library(tidyverse)
 library(phyloseq)
 library(vegan)
@@ -14,6 +16,7 @@ library(ggpubr)
 library(picante)
 library(ape)
 library(dunn.test)
+library(ggsignif)
 ```
 
 
@@ -131,12 +134,23 @@ p_NA_aggr_shannon = plot_richness(psrare, x="na_aggr",
 
 pdata_NA_aggr_shannon = p_NA_aggr_shannon$data
 
+p_formatted_NA_aggr = pdata_NA_aggr_shannon %>% ggplot(aes(na_aggr,value, fill = na_aggr)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+  geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
+theme_classic(base_size=16)+
+  ylab("Shannon Diversity") + xlab(NULL) +
+  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12)) +
+  labs(fill= "na_aggr")
+p_formatted_NA_aggr
+
 ```
 
 ```{r}
 df_NA_aggr_shannon <- data.frame(na_aggr = as.factor(pdata_NA_aggr_shannon$na_aggr), value = pdata_NA_aggr_shannon$value)
 #Kruskal-Wallis and Dunn's test as post-hoc
 res_sig_aggr_NA <-dunn.test(df_NA_aggr_shannon$value, df_NA_aggr_shannon$na_aggr, kw=TRUE, method = "bh")
+
+
 
 #one significant group
 ```
@@ -148,6 +162,15 @@ p_HA_aggr_shannon = plot_richness(psrare, x="ha_aggr",
                   color= "ha_aggr")
 
 pdata_HA_aggr_shannon = p_HA_aggr_shannon$data
+
+p_formatted_HA_aggr = pdata_HA_aggr_shannon %>% ggplot(aes(ha_aggr,value, fill = ha_aggr)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+  geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
+theme_classic(base_size=16)+
+  ylab("Shannon Diversity") + xlab(NULL) +
+  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12)) +
+  labs(fill= "ha_aggr")
+p_formatted_HA_aggr
 
 ```
 
@@ -168,6 +191,16 @@ p_HA_group_shannon = plot_richness(psrare, x="ha_group",
 
 pdata_HA_group_shannon = p_HA_group_shannon$data
 
+p_formatted_HA_group = pdata_HA_group_shannon %>% ggplot(aes(ha_group,value, 
+                                                             fill = ha_group)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+  geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
+theme_classic(base_size=16)+
+  ylab("Shannon Diversity") + xlab(NULL) +
+  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12)) +
+  labs(fill= "HA Phylogenetic Group")
+p_formatted_HA_group
+
 ```
 
 ```{r}
@@ -175,9 +208,22 @@ df_HA_group_shannon <- data.frame(ha_group = as.factor(pdata_HA_group_shannon$ha
 #Kruskal-Wallis and Dunn's test as post-hoc
 res_sig_group_HA <-dunn.test(df_HA_group_shannon$value, df_HA_group_shannon$ha_group, kw=TRUE, method = "bh")
 
+view(res_sig_group_HA)
+
 #Two significant groups
 
 ```
+
+```{r}
+
+P_signif_group_HA <- p_formatted_HA_group + geom_signif(
+    comparison = list(c("1", "neg"), c("2","neg")),
+    y_position = c(4.5,4),
+    annotations = c("*","*")
+  )
+P_signif_group_HA
+```
+
 Faith's Diversity
 
 ```{r}
