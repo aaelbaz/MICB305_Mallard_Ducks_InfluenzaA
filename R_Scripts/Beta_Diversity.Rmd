@@ -49,57 +49,103 @@ head(mds_data)
 ```
 
 #Step 4) 
-### Plot the data based on the following comparisons, different HA/NA subtypes, different HA subtypes, different NA subtypes, finally Infected Vs non infection comparison.
+### Plot the data based on the following comparisons, HA G1, G2 Vs Neg, HA G1 Vs Neg, HA G2 Vs Neg. 
 
 ```{r}
 
 # looking at Beta diversity differences between HA group 1, group 2 and negative control
 
-plot_HA_G1_VS_G2_VS_neg<- mds_data %>%
-                  ggplot(aes(MDS1,MDS2,color = ha_group)) +
-                  geom_point() +
-                  stat_ellipse() +
-                  theme_classic(base_size=18)
+#standardizing all the colors and shapes so they are consistent when comparing graphs. 
+custom_colors_HA<-c("1" = "blue", "2" = "red", "neg" = "purple")
+custom_shapes_HA <- c("1" = 21, "2" = 24, "neg" = 22)
 
+# looking at Beta diversity differences between HA group 1, group 2 and uninfected
+
+plot_HA_G1_VS_G2_VS_neg<- mds_data %>%
+                                  ggplot(aes(MDS1,MDS2,color = ha_group, fill = ha_group, shape = ha_group )) +
+                                  geom_point(size = 2, stroke = 1.4) +
+                                  scale_color_manual(values = custom_colors_HA)+
+                                  scale_fill_manual(values = custom_colors_HA)+
+                                  scale_shape_manual(values = custom_shapes_HA)+
+                                  stat_ellipse() +
+                                  theme_classic(base_size=18)+
+                                  theme(axis.title = element_text(size = 12),
+                                        axis.text = element_text(size = 10))+
+                                  labs( x = "MDS Axis 1",
+                                        y = "MDS Axis 2",
+                                        title = "Beta Diversity All HA Groups",
+                                        color = "HA grouping",
+                                        fill = "HA grouping",
+                                        shape = "HA grouping")
+                           
+plot_HA_G1_VS_G2_VS_neg            
 
 
 # looking at Beta diversity differences between HA group 1 and group 2
 plot_HA_G1_VS_G2<- mds_data %>%
-                  filter(ha_group != "neg") %>% 
-                  ggplot(aes(MDS1,MDS2,color = ha_group)) +
-                  geom_point() +
-                  stat_ellipse() +
-                  theme_classic(base_size=18)
-
+                            filter(ha_group != "neg") %>% 
+                            ggplot(aes(MDS1,MDS2,color = ha_group, fill = ha_group, shape = ha_group )) +
+                            geom_point(size = 2, stroke = 1.4) +
+                            scale_color_manual(values = custom_colors_HA)+
+                            scale_fill_manual(values = custom_colors_HA)+
+                            scale_shape_manual(values = custom_shapes_HA)+
+                            stat_ellipse() +
+                            theme_classic(base_size=18)+
+                            theme(axis.title = element_text(size = 12),
+                                  axis.text = element_text(size = 10))+
+                            labs( x = "MDS Axis 1",
+                                  y = "MDS Axis 2",
+                                  title = "Beta Diversity HA Group 1 vs Group 2",
+                                  color = "HA grouping",
+                                  fill = "HA grouping",
+                                  shape = "HA grouping")
+                  
+plot_HA_G1_VS_G2
 
 # looking at Beta diversity differences between HA group 1 and uninfected
 plot_HA_G1_VS_NEG<- mds_data %>%
-                  filter(ha_group != "2") %>% 
-                  ggplot(aes(MDS1,MDS2,color = ha_group)) +
-                  geom_point() +
-                  stat_ellipse() +
-                  theme_classic(base_size=18)
-
-# looking at Beta diversity differences between HA group 2 and uninfected
-plot_HA_G2_VS_NEG<- mds_data %>%
-                  filter(ha_group != "1") %>% 
-                  ggplot(aes(MDS1,MDS2,color = ha_group)) +
-                  geom_point() +
-                  stat_ellipse() +
-                  theme_classic(base_size=18)
-
-plot_HA_G1_VS_G2_VS_neg
-
-plot_HA_G1_VS_G2
+                              filter(ha_group != "2") %>% 
+                              ggplot(aes(MDS1,MDS2,color = ha_group, fill = ha_group, shape = ha_group )) +
+                              geom_point(size = 2, stroke = 1.4) +
+                              scale_color_manual(values = custom_colors_HA)+
+                              scale_fill_manual(values = custom_colors_HA)+
+                              scale_shape_manual(values = custom_shapes_HA)+
+                              stat_ellipse() +
+                              theme_classic(base_size=18)+
+                              theme(axis.title = element_text(size = 12),
+                                    axis.text = element_text(size = 10))+
+                              labs( x = "MDS Axis 1",
+                                    y = "MDS Axis 2",
+                                    title = "Beta Diversity HA Group 1 Vs Uninfected",
+                                    color = "HA grouping",
+                                    fill = "HA grouping",
+                                    shape = "HA grouping")
 
 plot_HA_G1_VS_NEG
-
+# looking at Beta diversity differences between HA group 2 and uninfected
+plot_HA_G2_VS_NEG<- mds_data %>%
+                              filter(ha_group != "1") %>% 
+                              ggplot(aes(MDS1,MDS2,color = ha_group, fill = ha_group, shape = ha_group )) +
+                              geom_point(size = 2, stroke = 1.4) +
+                              scale_color_manual(values = custom_colors_HA)+
+                              scale_fill_manual(values = custom_colors_HA)+
+                              scale_shape_manual(values = custom_shapes_HA)+
+                              stat_ellipse() +
+                              theme_classic(base_size=18)+
+                              theme(axis.title = element_text(size = 12),
+                                    axis.text = element_text(size = 10))+
+                              labs( x = "MDS Axis 1",
+                                    y = "MDS Axis 2",
+                                    title = "Beta Diversity HA Group 2 Vs Uninfected",
+                                    color = "HA grouping",
+                                    fill = "HA grouping",
+                                    shape = "HA grouping")
 plot_HA_G2_VS_NEG
 ```
 
 #Step 5)
 
-### Perform a PERMANOVA test to find statistical significance between the groups using an Adonis function.
+### Perform a PERMANOVA test to find statistical significance between the HA groups using an Adonis function.
 
 ```{r}
 metadata <- sample_data(psrare) %>% data.frame() # to make the next lines easier
@@ -112,64 +158,332 @@ Permanova_on_HA_groups <- adonis2(ps_WUF ~ ha_group, data = metadata, permutatio
 
 Permanova_on_HA_groups
 
-# when observing if their is a difference in the Beta diversity between Group 1,2 or negative control statistical significance was seen p= 0.02326
+# when observing if their is a difference in the Beta diversity between HA Group 1,2 or negative control statistical significance was seen p= 0.02326
 
 
 #this statistical significance led to us comparing each individual group within the ha_group column: group1 vs group 2 vs uninfected
 
 
 # Comparing HA G1 Vs G2 using PERMANOVA 
-compare_G1_vs_G2 = c('2','1')
+compare_G1_vs_G2_HA <- c('2','1')
 
 # Correct the data to make them have the same size when comparing G1 Vs G2
-keep_G1_vs_G2 = metadata %>% filter(ha_group %in% compare_G1_vs_G2) %>% rownames()
+keep_G1_vs_G2_HA <- metadata %>% filter(ha_group %in% compare_G1_vs_G2_HA) %>% rownames()
 
 
-ps_WUF_G1_vs_G2 = as.matrix(ps_WUF)[keep_G1_vs_G2,keep_G1_vs_G2] %>% as.dist()
+ps_WUF_G1_vs_G2_HA <- as.matrix(ps_WUF)[keep_G1_vs_G2_HA,keep_G1_vs_G2_HA] %>% as.dist()
 
 # Run a PERMANOVA on G1 vs G2
-Permanova_G1_vs_G2 = adonis2(ps_WUF_G1_vs_G2 ~ ha_group,
-                       data = metadata %>% filter(ha_group %in% compare_G1_vs_G2), permutations = 99999)
+Permanova_HA_G1_vs_G2 <- adonis2(ps_WUF_G1_vs_G2_HA ~ ha_group,
+                       data <- metadata %>% filter(ha_group %in% compare_G1_vs_G2_HA),permutations = 99999)
 
-Permanova_G1_vs_G2 
+Permanova_HA_G1_vs_G2 
 
 # This one showed no significance p= 0.3286 indcation no differences between the beta diversity of G1 vs G2
 
 # Comparing HA G1 Vs Neg using PERMANOVA 
-compare_G1_vs_neg = c('neg','1')
+compare_G1_vs_neg_HA <- c('neg','1')
 
 # Correct the data to make them have the same size when comparing G1 Vs neg
-keep_G1_vs_neg = metadata %>% filter(ha_group %in% compare_G1_vs_neg) %>% rownames()
+keep_G1_vs_neg_HA <- metadata %>% filter(ha_group %in% compare_G1_vs_neg_HA) %>% rownames()
 
 
-ps_WUF_G1_vs_neg = as.matrix(ps_WUF)[keep_G1_vs_neg,keep_G1_vs_neg] %>% as.dist()
+ps_WUF_G1_vs_neg_HA <- as.matrix(ps_WUF)[keep_G1_vs_neg_HA,keep_G1_vs_neg_HA] %>% as.dist()
 
 # Run a PERMANOVA on G1 vs neg
-Permanova_G1_vs_neg = adonis2(ps_WUF_G1_vs_neg ~ ha_group,
-                       data = metadata %>% filter(ha_group %in% compare_G1_vs_neg), permutations = 99999)
+Permanova_HA_G1_vs_neg <- adonis2(ps_WUF_G1_vs_neg_HA ~ ha_group,
+                       data = metadata %>% filter(ha_group %in% compare_G1_vs_neg_HA), permutations = 99999)
 
-Permanova_G1_vs_neg 
+Permanova_HA_G1_vs_neg 
 
 
-# This one showed no significance p= 0.09864 indcation no differences between the beta diversity of G1 vs neg
+# This one showed no significance p= 0.09864 indication no differences between the beta diversity of G1 vs neg
 
 
 # Comparing HA G2 Vs Neg using PERMANOVA 
-compare_G2_vs_neg = c('neg','2')
+compare_G2_vs_neg_HA <- c('neg','2')
 
 # Correct the data to make them have the same size when comparing G2 Vs neg
-keep_G2_vs_neg = metadata %>% filter(ha_group %in% compare_G2_vs_neg) %>% rownames()
+keep_G2_vs_neg_HA <- metadata %>% filter(ha_group %in% compare_G2_vs_neg_HA) %>% rownames()
 
 
-ps_WUF_G2_vs_neg = as.matrix(ps_WUF)[keep_G2_vs_neg,keep_G2_vs_neg] %>% as.dist()
+ps_WUF_G2_vs_neg_HA <- as.matrix(ps_WUF)[keep_G2_vs_neg_HA,keep_G2_vs_neg_HA] %>% as.dist()
 
 # Run a PERMANOVA on G2 vs neg
-Permanova_G2_vs_neg = adonis2(ps_WUF_G2_vs_neg ~ ha_group,
-                       data = metadata %>% filter(ha_group %in% compare_G2_vs_neg), permutations = 99999)
+Permanova_HA_G2_vs_neg <- adonis2(ps_WUF_G2_vs_neg_HA ~ ha_group,
+                       data = metadata %>% filter(ha_group %in% compare_G2_vs_neg_HA), permutations = 99999)
 
-Permanova_G2_vs_neg 
+Permanova_HA_G2_vs_neg 
 
-# This one showed no significance p= 0.0142 indcation a statisticaly significant differences between the beta diversity of G2 vs neg. This indicates that group 2 HA influenza viruses may have a stronger affect in changing the beta diversity of the coacle microbiome. 
+# This one showed  significance p= 0.0142 indication a statisticaly significant differences between the beta diversity of G2 vs neg. This indicates that group 2 HA influenza viruses may have a stronger affect in changing the beta diversity of the coacle microbiome. 
 
 
 ```
+
+
+
+
+#Step 6
+###Plot the data based on the following comparisons, NA G1, G2 Vs Neg, NA G1 Vs Neg, NA G2 Vs Neg. 
+```{r}
+
+
+
+# looking at Beta diversity differences between NA group 1, group 2 and negative control
+
+#standardizing all the colors and shapes so they are consistent when comparing graphs. 
+custom_colors_NA<-c("1" = "orange", "2" = "green", "neg" = "purple")
+custom_shapes_NA <- c("1" = 21, "2" = 24, "neg" = 22)
+
+# looking at Beta diversity differences between HA group 1, group 2 and uninfected
+
+plot_NA_G1_VS_G2_VS_neg<- mds_data %>%
+                                  ggplot(aes(MDS1,MDS2,color = na_group, fill = na_group, shape = na_group )) +
+                                  geom_point(size = 2, stroke = 1.4) +
+                                  scale_color_manual(values = custom_colors_NA)+
+                                  scale_fill_manual(values = custom_colors_NA)+
+                                  scale_shape_manual(values = custom_shapes_NA)+
+                                  stat_ellipse() +
+                                  theme_classic(base_size=18)+
+                                  theme(axis.title = element_text(size = 12),
+                                        axis.text = element_text(size = 10))+
+                                  labs( x = "MDS Axis 1",
+                                        y = "MDS Axis 2",
+                                        title = "Beta Diversity All NA Groups",
+                                        color = "NA grouping",
+                                        fill = "NA grouping",
+                                        shape = "NA grouping")
+                           
+plot_NA_G1_VS_G2_VS_neg            
+
+
+# looking at Beta diversity differences between HA group 1 and group 2
+plot_NA_G1_VS_G2<- mds_data %>%
+                            filter(na_group != "neg") %>% 
+                            ggplot(aes(MDS1,MDS2,color = na_group, fill = na_group, shape = na_group )) +
+                            geom_point(size = 2, stroke = 1.4) +
+                            scale_color_manual(values = custom_colors_NA)+
+                            scale_fill_manual(values = custom_colors_NA)+
+                            scale_shape_manual(values = custom_shapes_NA)+
+                            stat_ellipse() +
+                            theme_classic(base_size=18)+
+                            theme(axis.title = element_text(size = 12),
+                                  axis.text = element_text(size = 10))+
+                            labs( x = "MDS Axis 1",
+                                  y = "MDS Axis 2",
+                                  title = "Beta Diversity NA Group 1 vs Group 2",
+                                  color = "NA grouping",
+                                  fill = "NA grouping",
+                                  shape = "NA grouping")
+                  
+plot_NA_G1_VS_G2
+
+# looking at Beta diversity differences between HA group 1 and uninfected
+plot_NA_G1_VS_NEG<- mds_data %>%
+                              filter(na_group != "2") %>% 
+                              ggplot(aes(MDS1,MDS2,color = na_group, fill = na_group, shape = na_group )) +
+                              geom_point(size = 2, stroke = 1.4) +
+                              scale_color_manual(values = custom_colors_NA)+
+                              scale_fill_manual(values = custom_colors_NA)+
+                              scale_shape_manual(values = custom_shapes_NA)+
+                              stat_ellipse() +
+                              theme_classic(base_size=18)+
+                              theme(axis.title = element_text(size = 12),
+                                    axis.text = element_text(size = 10))+
+                              labs( x = "MDS Axis 1",
+                                    y = "MDS Axis 2",
+                                    title = "Beta Diversity NA G1 Vs Uninfected",
+                                    color = "NA grouping",
+                                    fill = "NA grouping",
+                                    shape = "NA grouping")
+
+plot_NA_G1_VS_NEG
+# looking at Beta diversity differences between HA group 2 and uninfected
+plot_NA_G2_VS_NEG<- mds_data %>%
+                              filter(na_group != "1") %>% 
+                              ggplot(aes(MDS1,MDS2,color = na_group, fill = na_group, shape = na_group )) +
+                              geom_point(size = 2, stroke = 1.4) +
+                              scale_color_manual(values = custom_colors_NA)+
+                              scale_fill_manual(values = custom_colors_NA)+
+                              scale_shape_manual(values = custom_shapes_NA)+
+                              stat_ellipse() +
+                              theme_classic(base_size=18)+
+                              theme(axis.title = element_text(size = 12),
+                                    axis.text = element_text(size = 10))+
+                              labs( x = "MDS Axis 1",
+                                    y = "MDS Axis 2",
+                                    title = "Beta Diversity NA Group 2 Vs Uninfected",
+                                    color = "NA grouping",
+                                    fill = "NA grouping",
+                                    shape = "NA grouping")
+plot_NA_G2_VS_NEG
+
+
+
+```
+#Step 7) 
+##stats for NA group
+```{r}
+
+metadata <- sample_data(psrare) %>% data.frame() # to make the next lines easier
+
+
+set.seed(421)
+# Single variable anova 
+
+Permanova_on_NA_groups <- adonis2(ps_WUF ~ na_group, data = metadata, permutation = 99999)
+
+Permanova_on_NA_groups
+
+# when observing if their is a difference in the Beta diversity between NA Group 1,2 or negative control statistical significance was seen p= 0.0235
+
+
+#this statistical significance led to us comparing each individual group within the na_group column: group1 vs group 2 vs uninfected
+
+
+# Comparing NA G1 Vs G2 using PERMANOVA 
+compare_G1_vs_G2_NA <- c('2','1')
+
+# Correct the data to make them have the same size when comparing G1 Vs G2
+keep_G1_vs_G2_NA <- metadata %>% filter(na_group %in% compare_G1_vs_G2_NA) %>% rownames()
+
+
+ps_WUF_G1_vs_G2_NA <- as.matrix(ps_WUF)[keep_G1_vs_G2_NA,keep_G1_vs_G2_NA] %>% as.dist()
+
+# Run a PERMANOVA on G1 vs G2
+Permanova_NA_G1_vs_G2 <- adonis2(ps_WUF_G1_vs_G2_NA ~ na_group,
+                       data = metadata %>% filter(na_group %in% compare_G1_vs_G2_NA), permutation = 99999)
+
+Permanova_NA_G1_vs_G2 
+
+# This one showed no significance p= 0.2812 indcation no differences between the beta diversity of G1 vs G2
+
+# Comparing HA G1 Vs Neg using PERMANOVA 
+compare_G1_vs_neg_NA <- c('neg','1')
+
+# Correct the data to make them have the same size when comparing G1 Vs neg
+keep_G1_vs_neg_NA <- metadata %>% filter(ha_group %in% compare_G1_vs_neg_NA) %>% rownames()
+
+
+ps_WUF_G1_vs_neg_NA <- as.matrix(ps_WUF)[keep_G1_vs_neg_NA,keep_G1_vs_neg_NA] %>% as.dist()
+
+# Run a PERMANOVA on G1 vs neg
+Permanova_NA_G1_vs_neg <- adonis2(ps_WUF_G1_vs_neg_NA ~ na_group,
+                       data = metadata %>% filter(ha_group %in% compare_G1_vs_neg_NA), permutations = 99999)
+
+Permanova_NA_G1_vs_neg 
+
+
+# This one showed no significance p= 0.1906 indcation no differences between the beta diversity of G1 vs neg
+
+
+# Comparing HA G2 Vs Neg using PERMANOVA 
+compare_G2_vs_neg_NA <- c('neg','2')
+
+# Correct the data to make them have the same size when comparing G2 Vs neg
+keep_G2_vs_neg_NA <- metadata %>% filter(ha_group %in% compare_G2_vs_neg_NA) %>% rownames()
+
+
+ps_WUF_G2_vs_neg_NA <- as.matrix(ps_WUF)[keep_G2_vs_neg_NA,keep_G2_vs_neg_NA] %>% as.dist()
+
+# Run a PERMANOVA on G2 vs neg
+Permanova_NA_G2_vs_neg <- adonis2(ps_WUF_G2_vs_neg_NA ~ na_group,
+                       data = metadata %>% filter(ha_group %in% compare_G2_vs_neg_NA), permutations = 99999)
+
+Permanova_NA_G2_vs_neg 
+
+# This one showed significance p= 0.03712 indcation a statisticaly significant differences between the beta diversity of G2 vs neg. This indicates that group 2 HA influenza viruses may have a stronger affect in changing the beta diversity of the coacle microbiome. 
+
+
+
+
+
+```
+
+
+
+# Step 8)
+##save data
+
+```{r}
+# saving the data 
+
+#  Save plot
+
+#HA data
+ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- Beta Diversity HA G1 vs G2 vs NEG.jpeg',
+       plot = plot_HA_G1_VS_G2_VS_neg,
+       height= 4, width = 6)
+
+ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- Beta Diversity HA G1 vs G2.jpeg',
+       plot = plot_HA_G1_VS_G2,
+       height= 4, width = 6)
+
+
+ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- HA G1 vs NEG.jpeg',
+       plot = plot_HA_G1_VS_NEG,
+       height= 4, width = 6)
+
+
+ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- HA G2 vs NEG.jpeg',
+       plot = plot_HA_G2_VS_NEG,
+       height= 4, width = 6)
+
+
+#NA data
+ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- Beta Diversity NA G1 vs G2 vs NEG.jpeg',
+       plot = plot_NA_G1_VS_G2_VS_neg,
+       height= 4, width = 6)
+
+ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- Beta Diversity NA G1 vs G2.jpeg',
+       plot = plot_NA_G1_VS_G2,
+       height= 4, width = 6)
+
+
+ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- NA G1 vs NEG.jpeg',
+       plot = plot_NA_G1_VS_NEG,
+       height= 4, width = 6)
+
+
+ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- NA G2 vs NEG.jpeg',
+       plot = plot_NA_G2_VS_NEG,
+       height= 4, width = 6)
+
+
+
+
+# Save statistics as an Excel file
+writexl::write_xlsx(list('Beta Diversity' = Permanova_on_HA_groups),
+                    '../visualizations/tables/Beta diversity stats/Beta_Diversity_Stats - Beta Diversity Permanova_on_HA_groups.xlsx')
+
+writexl::write_xlsx(list('Beta Diversity' = Permanova_HA_G1_vs_G2),
+                    '../visualizations/tables/Beta diversity stats/Beta_Diversity_Stats - Beta Diversity Permanova_HA_G1_vs_G2.xlsx')
+
+writexl::write_xlsx(list('Beta Diversity' = Permanova_HA_G1_vs_neg),
+                    '../visualizations/tables/Beta diversity stats/Beta_Diversity_Stats - Beta Diversity Permanova_HA_G1_vs_neg.xlsx')
+
+writexl::write_xlsx(list('Beta Diversity' = Permanova_HA_G2_vs_neg),
+                    '../visualizations/tables/Beta diversity stats/Beta_Diversity_Stats - Beta Diversity Permanova_HA_G2_vs_neg.xlsx')
+
+
+writexl::write_xlsx(list('Beta Diversity' = Permanova_on_NA_groups),
+                    '../visualizations/tables/Beta diversity stats/Beta_Diversity_Stats - Beta Diversity Permanova_on_NA_groups.xlsx')
+
+writexl::write_xlsx(list('Beta Diversity' = Permanova_NA_G1_vs_G2),
+                    '../visualizations/tables/Beta diversity stats/Beta_Diversity_Stats - Beta Diversity Permanova_NA_G1_vs_G2.xlsx')
+
+writexl::write_xlsx(list('Beta Diversity' = Permanova_NA_G1_vs_neg),
+                    '../visualizations/tables/Beta diversity stats/Beta_Diversity_Stats - Beta Diversity Permanova_NA_G1_vs_neg.xlsx')
+
+writexl::write_xlsx(list('Beta Diversity' = Permanova_NA_G2_vs_neg),
+                    '../visualizations/tables/Beta diversity stats/Beta_Diversity_Stats - Beta Diversity Permanova_NA_G2_vs_neg.xlsx')
+
+
+
+
+```
+
+
+
+
+

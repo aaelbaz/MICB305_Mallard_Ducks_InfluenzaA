@@ -36,34 +36,152 @@ ps_filt = prune_taxa(taxa_names(temp_filt),ps_genus)
 ps_filt
 ```
 
-# HA Subtypes
+# HA Groups
 
 ## Running ANCOMBC2 Analysis
 
+There are three comparisons to be made for HA groups:
+
+-   HA group 1 vs HA group 2
+
+-   HA group 1 vs uninfected (negative)
+
+-   HA group 2 vs uninfected (negative)
+
+ANCOMBC2 on default takes the first alphabetical group in ha_group as the reference, meaning without modifications it will take HA group 1 as the reference. To compare HA group 2 vs uninfected, Frederick Huang (author of ANCOMBC2) suggested subseting the data.
+
 ```{r}
-ha_out = ancombc2(data = ps_filt, 
+### H1 as reference ###
+ha1_out = ancombc2(data = ps_filt, 
                fix_formula = 'ha_group', 
                p_adj_method = 'BH',
                prv_cut = 0.3) # increased due to small sample size
 
-ha_statistical_table = ha_out$res
-view(ha_statistical_table)
+ha1_statistical_table = ha1_out$res
+view(ha1_statistical_table)
+
+### H2 as reference ###
+sub_ps <- subset_samples(ps_filt, ha_group %in% c("group2", "neg")) # subseting data to remove ha group_1
+
+ha2_out = ancombc2(data = ps_filt, 
+               fix_formula = 'ha_group', 
+               p_adj_method = 'BH',
+               prv_cut = 0.3) # increased due to small sample size
+
+ha2_statistical_table = ha2_out$res
+view(ha2_statistical_table)
 ```
 
 ## Volcano Plots
 
 ```{r}
 ### H1 vs H2 ### 
-ha_statistical_table$association_ = ifelse(ha_statistical_table$q_ha_group2 < 0.05 & ha_statistical_table$lfc_ha_group2 > 0, "Enriched", "Not significant")
-ha_statistical_table$association = ifelse(ha_statistical_table$q_ha_group2 < 0.05 & ha_statistical_table$lfc_ha_group2 < 0, "Depleted",ha_statistical_table$association)
+ha1_statistical_table$association_ = ifelse(ha1_statistical_table$q_ha_group2 < 0.05 & ha1_statistical_table$lfc_ha_group2 > 0, "Enriched", "Not significant")
+ha1_statistical_table$association = ifelse(ha1_statistical_table$q_ha_group2 < 0.05 & ha1_statistical_table$lfc_ha_group2 < 0, "Depleted",ha1_statistical_table$association)
 
-volcano_plot <- ggplot(ha_statistical_table, aes(x = as.numeric(lfc_ha_group2), y = -log10(as.numeric(q_ha_group2)), color = association)) +
+vplot_h1h2 <- ggplot(ha1_statistical_table, aes(x = as.numeric(lfc_ha_group2), y = -log10(as.numeric(q_ha_group2)), color = association)) +
   geom_point() +
   labs(x = "Log2 Fold Change", y = "-log10(p-value)",
-       title = "Volcano Plot") +
+       title = "Volcano Plot H1 vs H2") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
   theme_bw()
 
 
-volcano_plot
+vplot_h1h2
+
+### H1 vs neg ### 
+ha1_statistical_table$association_ = ifelse(ha1_statistical_table$q_ha_groupneg < 0.05 & ha1_statistical_table$lfc_ha_groupneg > 0, "Enriched", "Not significant")
+ha1_statistical_table$association = ifelse(ha1_statistical_table$q_ha_groupneg < 0.05 & ha1_statistical_table$lfc_ha_groupneg < 0, "Depleted",ha1_statistical_table$association)
+
+vplot_h1neg <- ggplot(ha1_statistical_table, aes(x = as.numeric(lfc_ha_groupneg), y = -log10(as.numeric(q_ha_groupneg)), color = association)) +
+  geom_point() +
+  labs(x = "Log2 Fold Change", y = "-log10(p-value)",
+       title = "Volcano Plot H1 vs neg") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+  theme_bw()
+
+
+vplot_h1neg
+
+### H2 vs neg ###
+ha2_statistical_table$association_ = ifelse(ha2_statistical_table$q_ha_groupneg < 0.05 & ha2_statistical_table$lfc_ha_groupneg > 0, "Enriched", "Not significant")
+ha2_statistical_table$association = ifelse(ha2_statistical_table$q_ha_groupneg < 0.05 & ha2_statistical_table$lfc_ha_groupneg < 0, "Depleted", ha2_statistical_table$association)
+
+vplot_h2neg <- ggplot(ha2_statistical_table, aes(x = as.numeric(lfc_ha_groupneg), y = -log10(as.numeric(q_ha_groupneg)), color = association)) +
+  geom_point() +
+  labs(x = "Log2 Fold Change", y = "-log10(p-value)",
+       title = "Volcano Plot H2 vs neg") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
+  theme_bw()
+
+
+vplot_h2neg
+```
+
+## Log2Change Plots
+
+```{r}
+### H1 vs neg ### 
+# Filter stats to only include taxa that are differentially abundant between the gut and tongue
+h1neg_taxa_plot = ha1_statistical_table %>% 
+  filter(diff_robust_ha_groupneg==T) 
+
+# Plot the log 2 fold changes
+# Note: you'll have to figure out how to plot the genera names instead of the
+# representative ASV names!
+
+h1neg_taxa_plot %>%
+  ggplot(aes(taxon,lfc_ha_groupneg)) +
+  geom_col() +
+  coord_flip()
+
+
+### H2 vs neg ### 
+# Filter stats to only include taxa that are differentially abundant between the gut and tongue
+h2neg_taxa_plot = ha2_statistical_table %>% 
+  filter(diff_robust_ha_groupneg==T) 
+
+# Plot the log 2 fold changes
+# Note: you'll have to figure out how to plot the genera names instead of the
+# representative ASV names!
+
+h2neg_taxa_plot %>%
+  ggplot(aes(taxon,lfc_ha_groupneg)) +
+  geom_col() +
+  coord_flip()
+
+```
+
+# NA Groups
+
+## Running ANCOMBC2 Analysis
+
+There are three comparisons to be made for HA groups:
+
+-   NA group 1 vs NA group 2
+
+-   NA group 1 vs uninfected (negative)
+
+-   NA group 2 vs uninfected (negative)
+
+```{r}
+### H1 as reference ###
+na1_out = ancombc2(data = ps_filt, 
+               fix_formula = 'na_group', 
+               p_adj_method = 'BH',
+               prv_cut = 0.3) # increased due to small sample size
+
+na1_statistical_table = na1_out$res
+view(na1_statistical_table)
+
+### H2 as reference ###
+sub_ps <- subset_samples(ps_filt, na_group %in% c("group2", "neg")) # subseting data to remove ha group_1
+
+na2_out = ancombc2(data = ps_filt, 
+               fix_formula = 'na_group', 
+               p_adj_method = 'BH',
+               prv_cut = 0.3) # increased due to small sample size
+
+na2_statistical_table = na2_out$res
+view(na2_statistical_table)
 ```
