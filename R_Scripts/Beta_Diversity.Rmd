@@ -73,10 +73,10 @@ plot_HA_G1_VS_G2_VS_neg<- mds_data %>%
                                         axis.text = element_text(size = 10))+
                                   labs( x = "MDS Axis 1",
                                         y = "MDS Axis 2",
-                                        title = "Beta Diversity All Groups",
-                                        color = "Treatment",
-                                        fill = "Treatment",
-                                        shape = "Treatment")
+                                        title = "Beta Diversity All HA Groups",
+                                        color = "HA gouping",
+                                        fill = "HA gouping",
+                                        shape = "HA gouping")
                            
 plot_HA_G1_VS_G2_VS_neg            
 
@@ -95,10 +95,10 @@ plot_HA_G1_VS_G2<- mds_data %>%
                                   axis.text = element_text(size = 10))+
                             labs( x = "MDS Axis 1",
                                   y = "MDS Axis 2",
-                                  title = "Beta Diversity Group 1 vs Group 2",
-                                  color = "Treatment",
-                                  fill = "Treatment",
-                                  shape = "Treatment")
+                                  title = "Beta Diversity HA Group 1 vs Group 2",
+                                  color = "HA gouping ",
+                                  fill = "HA gouping",
+                                  shape = "HA gouping")
                   
 plot_HA_G1_VS_G2
 
@@ -116,10 +116,10 @@ plot_HA_G1_VS_NEG<- mds_data %>%
                                     axis.text = element_text(size = 10))+
                               labs( x = "MDS Axis 1",
                                     y = "MDS Axis 2",
-                                    title = "Beta Diversity G1 Vs Uninfected",
-                                    color = "Treatment",
-                                    fill = "Treatment",
-                                    shape = "Treatment")
+                                    title = "Beta Diversity HA Group 1 Vs Uninfected",
+                                    color = "HA gouping",
+                                    fill = "HA gouping",
+                                    shape = "HA gouping")
 
 plot_HA_G1_VS_NEG
 # looking at Beta diversity differences between HA group 2 and uninfected
@@ -136,10 +136,10 @@ plot_HA_G2_VS_NEG<- mds_data %>%
                                     axis.text = element_text(size = 10))+
                               labs( x = "MDS Axis 1",
                                     y = "MDS Axis 2",
-                                    title = "Beta Diversity Group 2 Vs Uninfected",
-                                    color = "Treatment",
-                                    fill = "Treatment",
-                                    shape = "Treatment")
+                                    title = "Beta Diversity HA Group 2 Vs Uninfected",
+                                    color = "HA gouping",
+                                    fill = "HA gouping",
+                                    shape = "HA gouping")
 plot_HA_G2_VS_NEG
 ```
 
@@ -249,10 +249,10 @@ plot_NA_G1_VS_G2_VS_neg<- mds_data %>%
                                         axis.text = element_text(size = 10))+
                                   labs( x = "MDS Axis 1",
                                         y = "MDS Axis 2",
-                                        title = "Beta Diversity All Groups",
-                                        color = "Treatment",
-                                        fill = "Treatment",
-                                        shape = "Treatment")
+                                        title = "Beta Diversity All NA Groups",
+                                        color = "NA grouping",
+                                        fill = "NA grouping",
+                                        shape = "NA grouping")
                            
 plot_NA_G1_VS_G2_VS_neg            
 
@@ -271,10 +271,10 @@ plot_NA_G1_VS_G2<- mds_data %>%
                                   axis.text = element_text(size = 10))+
                             labs( x = "MDS Axis 1",
                                   y = "MDS Axis 2",
-                                  title = "Beta Diversity Group 1 vs Group 2",
-                                  color = "Treatment",
-                                  fill = "Treatment",
-                                  shape = "Treatment")
+                                  title = "Beta Diversity NA Group 1 vs Group 2",
+                                  color = "NA grouping",
+                                  fill = "NA grouping",
+                                  shape = "NA grouping")
                   
 plot_NA_G1_VS_G2
 
@@ -292,10 +292,10 @@ plot_NA_G1_VS_NEG<- mds_data %>%
                                     axis.text = element_text(size = 10))+
                               labs( x = "MDS Axis 1",
                                     y = "MDS Axis 2",
-                                    title = "Beta Diversity G1 Vs Uninfected",
-                                    color = "Treatment",
-                                    fill = "Treatment",
-                                    shape = "Treatment")
+                                    title = "Beta Diversity NA G1 Vs Uninfected",
+                                    color = "NA grouping",
+                                    fill = "NA grouping",
+                                    shape = "NA grouping")
 
 plot_NA_G1_VS_NEG
 # looking at Beta diversity differences between HA group 2 and uninfected
@@ -312,20 +312,11 @@ plot_NA_G2_VS_NEG<- mds_data %>%
                                     axis.text = element_text(size = 10))+
                               labs( x = "MDS Axis 1",
                                     y = "MDS Axis 2",
-                                    title = "Beta Diversity Group 2 Vs Uninfected",
-                                    color = "Treatment",
-                                    fill = "Treatment",
-                                    shape = "Treatment")
+                                    title = "Beta Diversity NA Group 2 Vs Uninfected",
+                                    color = "NA grouping",
+                                    fill = "NA grouping",
+                                    shape = "NA grouping")
 plot_NA_G2_VS_NEG
-
-
-
-
-
-
-
-
-
 
 
 
