@@ -414,6 +414,8 @@ library(microbiome)</code></pre>
 ## The following object is masked from &#39;package:dplyr&#39;:
 ## 
 ##     combine</code></pre>
+<pre class="r"><code>library(gtable)
+library(grid)</code></pre>
 </div>
 <div id="load-data" class="section level2">
 <h2>2. Load Data</h2>
@@ -438,23 +440,15 @@ ps_filt = tax_glom(ps, &quot;Genus&quot;) %&gt;%
 <p>An indicator value of &gt; 0.7 and p-value of &lt; 0.05 were
 considered as the thresholds for significance.</p>
 <pre class="r"><code># Conduct indicator taxa analysis by HA group &amp; filter results for stat &amp; p-value cutoffs
-ita_ha_grp = multipatt(t(otu_table(ps_filt)), 
+ita_ha = multipatt(t(otu_table(ps_filt)), 
                        cluster = sample_data(ps_filt)$ha_group,
                        control = how(nperm = 999))$sign %&gt;%
   as.data.frame(.) %&gt;%
   filter(stat &gt; 0.7 &amp; p.value &lt; 0.05)
 
-# Conduct indicator taxa analysis by HA subtype &amp; filter results for stat &amp; p-value cutoffs
-ita_ha_stp = multipatt(t(otu_table(ps_filt)), 
-                       cluster = sample_data(ps_filt)$ha_aggr,
-                       control = how(nperm = 999))$sign %&gt;%
-  as.data.frame(.) %&gt;%
-  filter(stat &gt; 0.7 &amp; p.value &lt; 0.05)
-
-
-# Conduct indicator taxa analysis by NA subtype &amp; filter results for stat &amp; p-value cutoffs
+# Conduct indicator taxa analysis by NA group &amp; filter results for stat &amp; p-value cutoffs
 ita_na = multipatt(t(otu_table(ps_filt)), 
-                       cluster = sample_data(ps_filt)$na_aggr,
+                       cluster = sample_data(ps_filt)$na_group,
                        control = how(nperm = 999))$sign %&gt;%
   as.data.frame(.) %&gt;%
   filter(stat &gt; 0.7 &amp; p.value &lt; 0.05)</code></pre>
@@ -463,98 +457,63 @@ ita_na = multipatt(t(otu_table(ps_filt)),
 <h2>5. Generate Indicator Taxa Summary Tables for HA &amp; NA
 Analyses</h2>
 <p>The tables are organized such that each row corresponds to an
-indicator genus. The values of the columns ha_group_1 and ha_group_2,
-H2-H5, N1-N9 excluding N4, and neg represent whether the given genus is
-an indicator for that group (1) or not (0). Additionally, the tables are
-filtered to only include significant results (p &lt; 0.05 &amp; stat
-&gt; 0.7).</p>
+indicator genus. The values of the columns “HA Group 1”, “HA Group 2”,
+“NA Group 1”, “NA Group 2”, and “Uninfected” represent whether the given
+genus is an indicator for that group (✔) or not (✘). Additionally, the
+tables are filtered to only include significant results (p &lt; 0.05
+&amp; stat &gt; 0.7).</p>
 <div id="ha-group-table" class="section level3">
 <h3>5.1 HA Group Table</h3>
 <pre class="r"><code># Get indicator genera names from indicator genera ASVs
-indicator_genera_ha_grp = data.frame(ps_filt@tax_table) %&gt;%
+indicator_genera_ha = data.frame(ps_filt@tax_table) %&gt;%
   rownames_to_column() %&gt;%
-  filter(rowname %in% rownames(ita_ha_grp)) %&gt;%
+  filter(rowname %in% rownames(ita_ha)) %&gt;%
   select(rowname, Genus)
-indicator_genera_ha_grp$Genus = indicator_genera_ha_grp$Genus %&gt;% str_replace(&quot;g__&quot;, &quot;&quot;)
+indicator_genera_ha$Genus = indicator_genera_ha$Genus %&gt;% str_replace(&quot;g__&quot;, &quot;&quot;)
 
 # Generate summary table
-ita_summary_ha_grp = ita_ha_grp %&gt;%
+ita_summary_ha = ita_ha %&gt;%
   rownames_to_column() %&gt;%
-  left_join(indicator_genera_ha_grp)</code></pre>
+  left_join(indicator_genera_ha)</code></pre>
 <pre><code>## Joining with `by = join_by(rowname)`</code></pre>
 <pre class="r"><code># Format summary table for ease of interpretation
-ita_summary_ha_formatted_grp = ita_summary_ha_grp %&gt;%
-  rename(ha_group_1 = &quot;s.1&quot;, ha_group_2 = &quot;s.2&quot;, neg = &quot;s.neg&quot;) %&gt;%
+ita_summary_ha_formatted = ita_summary_ha %&gt;%
+  rename(&quot;HA Group 1&quot; = &quot;s.1&quot;, &quot;HA Group 2&quot; = &quot;s.2&quot;, &quot;Uninfected&quot; = &quot;s.neg&quot;) %&gt;%
   select(-index, -rowname) %&gt;%
   relocate(stat, .after = last_col()) %&gt;%
   relocate(p.value, .before = stat) %&gt;%
-  relocate(Genus, .before = ha_group_1) %&gt;%
+  relocate(Genus, .before = &quot;HA Group 1&quot;) %&gt;%
   mutate(stat = round(stat, 3)) %&gt;%
-  rename(indicator_value = stat, p_value = p.value)
+  rename(&quot;Indicator Value&quot; = stat, &quot;P value&quot; = p.value)
+
+# Re-label indicator 0/1 markers with ✘/✔
+for(col in colnames(ita_summary_ha_formatted[,2:4])) {
+  ita_summary_ha_formatted[, col] = replace(ita_summary_ha_formatted[, col],
+                                            which(1 == ita_summary_ha_formatted[, col]),
+                                            &quot;✔&quot;)
+  ita_summary_ha_formatted[, col] = replace(ita_summary_ha_formatted[, col],
+                                            which(0 == ita_summary_ha_formatted[, col]),
+                                            &quot;✘&quot;)
+}
 
 # Display formatted summary table
-ita_summary_ha_formatted_grp</code></pre>
-<pre><code>##                 Genus ha_group_1 ha_group_2 neg p_value indicator_value
-## 1      Alloprevotella          0          0   1   0.001           0.797
-## 2          Prevotella          0          0   1   0.001           0.956
-## 3    Sphingobacterium          1          1   0   0.001           0.763
-## 4          Pedobacter          1          1   0   0.001           0.780
-## 5         Peptococcus          1          1   0   0.013           0.724
-## 6             Gemella          0          0   1   0.001           0.825
-## 7      Granulicatella          0          0   1   0.001           0.889
-## 8         Haemophilus          0          0   1   0.001           0.926
-## 9         Varibaculum          1          1   0   0.002           0.759
-## 10             Rothia          0          0   1   0.001           0.959
-## 11          Treponema          0          0   1   0.001           0.724
-## 12  Anaerosporobacter          1          1   0   0.008           0.760</code></pre>
+ita_summary_ha_formatted</code></pre>
+<pre><code>##                 Genus HA Group 1 HA Group 2 Uninfected P value Indicator Value
+## 1      Alloprevotella          ✘          ✘          ✔   0.001           0.797
+## 2          Prevotella          ✘          ✘          ✔   0.001           0.956
+## 3    Sphingobacterium          ✔          ✔          ✘   0.001           0.763
+## 4          Pedobacter          ✔          ✔          ✘   0.001           0.780
+## 5         Peptococcus          ✔          ✔          ✘   0.013           0.724
+## 6             Gemella          ✘          ✘          ✔   0.001           0.825
+## 7      Granulicatella          ✘          ✘          ✔   0.001           0.889
+## 8         Haemophilus          ✘          ✘          ✔   0.001           0.926
+## 9         Varibaculum          ✔          ✔          ✘   0.002           0.759
+## 10             Rothia          ✘          ✘          ✔   0.001           0.959
+## 11          Treponema          ✘          ✘          ✔   0.001           0.724
+## 12  Anaerosporobacter          ✔          ✔          ✘   0.008           0.760</code></pre>
 </div>
-<div id="ha-subtype-table" class="section level3">
-<h3>5.2 HA Subtype Table</h3>
-<pre class="r"><code># Get indicator genera names from indicator genera ASVs
-indicator_genera_ha_stp = data.frame(ps_filt@tax_table) %&gt;%
-  rownames_to_column() %&gt;%
-  filter(rowname %in% rownames(ita_ha_stp)) %&gt;%
-  select(rowname, Genus)
-indicator_genera_ha_stp$Genus = indicator_genera_ha_stp$Genus %&gt;% str_replace(&quot;g__&quot;, &quot;&quot;)
-
-# Generate summary table
-ita_summary_ha_stp = ita_ha_stp %&gt;%
-  rownames_to_column() %&gt;%
-  left_join(indicator_genera_ha_stp)</code></pre>
-<pre><code>## Joining with `by = join_by(rowname)`</code></pre>
-<pre class="r"><code># Format summary table for ease of interpretation
-ita_summary_ha_formatted_stp = ita_summary_ha_stp %&gt;%
-  rename(H2 = &quot;s.2&quot;, H3 = &quot;s.3&quot;, H4 = &quot;s.4&quot;, H5 = &quot;s.5&quot;, neg = &quot;s.neg&quot;) %&gt;%
-  select(-index, -rowname) %&gt;%
-  relocate(stat, .after = last_col()) %&gt;%
-  relocate(p.value, .before = stat) %&gt;%
-  relocate(Genus, .before = H2) %&gt;%
-  mutate(stat = round(stat, 3)) %&gt;%
-  rename(indicator_value = stat, p_value = p.value)
-
-# Display formatted summary table
-ita_summary_ha_formatted_stp</code></pre>
-<pre><code>##                              Genus H2 H3 H4 H5 neg p_value indicator_value
-## 1                   Alloprevotella  1  0  0  0   1   0.001           0.778
-## 2                       Prevotella  0  0  0  0   1   0.001           0.927
-## 3                 Sphingobacterium  1  1  0  1   0   0.001           0.794
-## 4                       Pedobacter  1  1  0  1   0   0.002           0.817
-## 5                      Peptococcus  0  1  1  1   0   0.042           0.742
-## 6                          Gemella  1  0  0  0   1   0.001           0.827
-## 7                   Granulicatella  0  0  0  0   1   0.001           0.870
-## 8                       uncultured  1  1  1  1   0   0.020           0.840
-## 9                      Haemophilus  0  0  0  0   1   0.001           0.910
-## 10                   Rodentibacter  1  0  0  0   1   0.001           0.753
-## 11                Stenotrophomonas  1  1  0  0   0   0.009           0.835
-## 12  Methylobacterium-Methylorubrum  1  1  0  0   0   0.001           0.808
-## 13                   Brevundimonas  1  1  1  1   0   0.001           0.922
-## 14                     Varibaculum  1  0  1  1   0   0.001           0.799
-## 15                          Rothia  0  0  0  0   1   0.001           0.938
-## 16                       Treponema  0  0  0  0   1   0.001           0.712
-## 17               Anaerosporobacter  0  1  1  1   0   0.006           0.790</code></pre>
-</div>
-<div id="na-subtype-table" class="section level3">
-<h3>5.3 NA Subtype Table</h3>
+<div id="na-group-table" class="section level3">
+<h3>5.2 NA Group Table</h3>
 <pre class="r"><code># Get indicator genera names from indicator genera ASVs
 indicator_genera_na = data.frame(ps_filt@tax_table) %&gt;%
   rownames_to_column() %&gt;%
@@ -569,84 +528,66 @@ ita_summary_na = ita_na %&gt;%
 <pre><code>## Joining with `by = join_by(rowname)`</code></pre>
 <pre class="r"><code># Format summary table for ease of interpretation
 ita_summary_na_formatted = ita_summary_na %&gt;%
-  rename(N1 = &quot;s.1&quot;, N2 = &quot;s.2&quot;, N3 = &quot;s.3&quot;, N5 = &quot;s.5&quot;,
-         N6 = &quot;s.6&quot;, N7 = &quot;s.7&quot;, N8 = &quot;s.8&quot;, N9 = &quot;s.9&quot;, neg = &quot;s.neg&quot;) %&gt;%
+  rename(&quot;NA Group 1&quot; = &quot;s.1&quot;, &quot;NA Group 2&quot; = &quot;s.2&quot;, &quot;Uninfected&quot; = &quot;s.neg&quot;) %&gt;%
   select(-index, -rowname) %&gt;%
   relocate(stat, .after = last_col()) %&gt;%
   relocate(p.value, .before = stat) %&gt;%
-  relocate(Genus, .before = N1) %&gt;%
+  relocate(Genus, .before = &quot;NA Group 1&quot;) %&gt;%
   mutate(stat = round(stat, 3)) %&gt;%
-  rename(indicator_value = stat, p_value = p.value)
+  rename(&quot;Indicator Value&quot; = stat, &quot;P value&quot; = p.value)
+
+# Re-label indicator 0/1 markers with ✘/✔
+for(col in colnames(ita_summary_na_formatted[,2:4])) {
+  ita_summary_na_formatted[, col] = replace(ita_summary_na_formatted[, col],
+                                            which(1 == ita_summary_na_formatted[, col]),
+                                            &quot;✔&quot;)
+  ita_summary_na_formatted[, col] = replace(ita_summary_na_formatted[, col],
+                                            which(0 == ita_summary_na_formatted[, col]),
+                                            &quot;✘&quot;)
+}
 
 # Display formatted summary table
 ita_summary_na_formatted</code></pre>
-<pre><code>##                                     Genus N1 N2 N3 N5 N6 N7 N8 N9 neg p_value
-## 1                      Cyanobium_PCC-6307  0  0  0  0  0  0  0  1   0   0.013
-## 2                              Prevotella  0  0  0  0  0  1  0  0   1   0.001
-## 3                        Sphingobacterium  1  0  1  1  0  0  1  1   0   0.015
-## 4                              Pedobacter  1  1  1  1  0  1  1  0   0   0.014
-## 5                           Cetobacterium  1  0  0  0  0  0  1  0   0   0.037
-## 6                             Peptococcus  0  0  0  0  0  0  0  1   0   0.018
-## 7                                 Gemella  0  0  1  0  0  1  0  0   1   0.011
-## 8                          Granulicatella  0  0  0  0  0  0  0  0   1   0.004
-## 9                           Streptococcus  1  1  1  0  1  1  1  1   1   0.001
-## 10                             uncultured  1  1  1  1  1  1  1  0   0   0.007
-## 11               Candidatus_Bacilloplasma  0  0  0  0  0  0  0  1   0   0.031
-## 12                            Haemophilus  0  0  0  0  0  0  0  0   1   0.001
-## 13                          Rodentibacter  0  0  0  0  0  1  0  0   0   0.036
-## 14                       Stenotrophomonas  1  0  1  0  0  1  1  1   0   0.001
-## 15                          Brevundimonas  1  1  1  1  1  1  1  1   0   0.001
-## 16                                Devosia  0  0  0  0  0  1  0  1   0   0.037
-## 17                                   LD29  0  0  0  0  0  0  0  1   0   0.015
-## 18                            Varibaculum  1  0  0  1  0  1  0  1   0   0.008
-## 19                                 Rothia  0  0  0  0  0  0  0  0   1   0.001
-## 20                                   RF39  0  0  0  0  0  1  0  0   0   0.041
-## 21                 Candidatus_Arthromitus  0  0  0  0  0  1  0  1   0   0.002
-## 22  [Eubacterium]_coprostanoligenes_group  0  0  0  0  0  1  0  0   0   0.043
-## 23                      Anaerosporobacter  1  1  0  1  0  1  1  0   0   0.040
-## 24                           Oribacterium  0  0  0  0  0  1  0  0   0   0.038
-## 25          Lachnospiraceae_NK4A136_group  0  0  0  0  0  1  0  0   0   0.040
-##    indicator_value
-## 1            0.977
-## 2            0.920
-## 3            0.817
-## 4            0.813
-## 5            0.732
-## 6            0.960
-## 7            0.831
-## 8            0.854
-## 9            0.911
-## 10           0.871
-## 11           0.932
-## 12           0.915
-## 13           0.787
-## 14           0.887
-## 15           0.934
-## 16           0.880
-## 17           0.977
-## 18           0.861
-## 19           0.912
-## 20           0.926
-## 21           0.937
-## 22           0.869
-## 23           0.831
-## 24           0.833
-## 25           0.810</code></pre>
+<pre><code>##                 Genus NA Group 1 NA Group 2 Uninfected P value Indicator Value
+## 1          Mycoplasma          ✘          ✔          ✔   0.001           0.802
+## 2      Alloprevotella          ✘          ✘          ✔   0.001           0.790
+## 3          Prevotella          ✘          ✘          ✔   0.001           0.958
+## 4    Sphingobacterium          ✔          ✔          ✘   0.001           0.730
+## 5          Pedobacter          ✔          ✔          ✘   0.002           0.771
+## 6         Peptococcus          ✔          ✔          ✘   0.016           0.729
+## 7             Gemella          ✘          ✘          ✔   0.001           0.822
+## 8      Granulicatella          ✘          ✘          ✔   0.001           0.878
+## 9         Haemophilus          ✘          ✘          ✔   0.001           0.931
+## 10        Varibaculum          ✔          ✔          ✘   0.003           0.767
+## 11             Rothia          ✘          ✘          ✔   0.001           0.949
+## 12          Treponema          ✘          ✘          ✔   0.001           0.733
+## 13  Anaerosporobacter          ✔          ✔          ✘   0.011           0.764</code></pre>
 </div>
 <div id="save-ha-na-tables" class="section level3">
-<h3>5.4 Save HA &amp; NA Tables</h3>
-<pre class="r"><code>pdf(&quot;../visualizations/tables/ita_ha_grp_summary.pdf&quot;, paper = &quot;USr&quot;)
-grid.table(ita_summary_ha_formatted_grp, theme = ttheme_default(base_size = 8), rows = NULL)
+<h3>5.3 Save HA &amp; NA Tables</h3>
+<pre class="r"><code># HA Table
+cairo_pdf(&quot;../visualizations/tables/ita_ha_summary.pdf&quot;)
+ha_g = tableGrob(ita_summary_ha_formatted, theme = ttheme_minimal(base_size = 8), rows = NULL)
+ha_g = gtable_add_grob(ha_g, grobs = segmentsGrob(x0 = unit(0, &quot;npc&quot;),
+                                            y0 = unit(0, &quot;npc&quot;),
+                                            x1 = unit(1, &quot;npc&quot;),
+                                            y1 = unit(0, &quot;npc&quot;)),
+                    t = 1, l = 1, b = 1, r = ncol(ha_g))
+grid.newpage()
+grid.draw(ha_g)
 dev.off()</code></pre>
 <pre><code>## quartz_off_screen 
 ##                 2</code></pre>
-<pre class="r"><code>pdf(&quot;../visualizations/tables/ita_ha_stp_summary.pdf&quot;, paper = &quot;USr&quot;)
-grid.table(ita_summary_ha_formatted_stp, theme = ttheme_default(base_size = 8), rows = NULL)
-dev.off()</code></pre>
-<pre><code>## quartz_off_screen 
-##                 2</code></pre>
-<pre class="r"><code>pdf(&quot;../visualizations/tables/ita_na_summary.pdf&quot;, paper = &quot;USr&quot;)
-grid.table(ita_summary_na_formatted, theme = ttheme_default(base_size = 8), rows = NULL)
+<pre class="r"><code># NA Table
+cairo_pdf(&quot;../visualizations/tables/ita_na_summary.pdf&quot;)
+na_g = tableGrob(ita_summary_na_formatted, theme = ttheme_minimal(base_size = 8), rows = NULL)
+na_g = gtable_add_grob(na_g, grobs = segmentsGrob(x0 = unit(0, &quot;npc&quot;),
+                                            y0 = unit(0, &quot;npc&quot;),
+                                            x1 = unit(1, &quot;npc&quot;),
+                                            y1 = unit(0, &quot;npc&quot;)),
+                    t = 1, l = 1, b = 1, r = ncol(na_g))
+grid.newpage()
+grid.draw(na_g)
 dev.off()</code></pre>
 <pre><code>## quartz_off_screen 
 ##                 2</code></pre>

@@ -16,6 +16,8 @@ library(ggpubr)
 library(microbiome)
 library(indicspecies)
 library(gridExtra)
+library(gtable)
+library(grid)
 ```
 
 ## 2. Load Data
@@ -45,23 +47,15 @@ An indicator value of \> 0.7 and p-value of \< 0.05 were considered as the thres
 
 ```{r}
 # Conduct indicator taxa analysis by HA group & filter results for stat & p-value cutoffs
-ita_ha_grp = multipatt(t(otu_table(ps_filt)), 
+ita_ha = multipatt(t(otu_table(ps_filt)), 
                        cluster = sample_data(ps_filt)$ha_group,
                        control = how(nperm = 999))$sign %>%
   as.data.frame(.) %>%
   filter(stat > 0.7 & p.value < 0.05)
 
-# Conduct indicator taxa analysis by HA subtype & filter results for stat & p-value cutoffs
-ita_ha_stp = multipatt(t(otu_table(ps_filt)), 
-                       cluster = sample_data(ps_filt)$ha_aggr,
-                       control = how(nperm = 999))$sign %>%
-  as.data.frame(.) %>%
-  filter(stat > 0.7 & p.value < 0.05)
-
-
-# Conduct indicator taxa analysis by NA subtype & filter results for stat & p-value cutoffs
+# Conduct indicator taxa analysis by NA group & filter results for stat & p-value cutoffs
 ita_na = multipatt(t(otu_table(ps_filt)), 
-                       cluster = sample_data(ps_filt)$na_aggr,
+                       cluster = sample_data(ps_filt)$na_group,
                        control = how(nperm = 999))$sign %>%
   as.data.frame(.) %>%
   filter(stat > 0.7 & p.value < 0.05)
@@ -69,67 +63,48 @@ ita_na = multipatt(t(otu_table(ps_filt)),
 
 ## 5. Generate Indicator Taxa Summary Tables for HA & NA Analyses
 
-The tables are organized such that each row corresponds to an indicator genus. The values of the columns ha_group_1 and ha_group_2, H2-H5, N1-N9 excluding N4, and neg represent whether the given genus is an indicator for that group (1) or not (0). Additionally, the tables are filtered to only include significant results (p \< 0.05 & stat \> 0.7).
+The tables are organized such that each row corresponds to an indicator genus. The values of the columns "HA Group 1", "HA Group 2", "NA Group 1", "NA Group 2", and "Uninfected" represent whether the given genus is an indicator for that group (✔) or not (✘). Additionally, the tables are filtered to only include significant results (p \< 0.05 & stat \> 0.7).
 
 ### 5.1 HA Group Table
 
 ```{r}
 # Get indicator genera names from indicator genera ASVs
-indicator_genera_ha_grp = data.frame(ps_filt@tax_table) %>%
+indicator_genera_ha = data.frame(ps_filt@tax_table) %>%
   rownames_to_column() %>%
-  filter(rowname %in% rownames(ita_ha_grp)) %>%
+  filter(rowname %in% rownames(ita_ha)) %>%
   select(rowname, Genus)
-indicator_genera_ha_grp$Genus = indicator_genera_ha_grp$Genus %>% str_replace("g__", "")
+indicator_genera_ha$Genus = indicator_genera_ha$Genus %>% str_replace("g__", "")
 
 # Generate summary table
-ita_summary_ha_grp = ita_ha_grp %>%
+ita_summary_ha = ita_ha %>%
   rownames_to_column() %>%
-  left_join(indicator_genera_ha_grp)
+  left_join(indicator_genera_ha)
 
 # Format summary table for ease of interpretation
-ita_summary_ha_formatted_grp = ita_summary_ha_grp %>%
-  rename(ha_group_1 = "s.1", ha_group_2 = "s.2", neg = "s.neg") %>%
+ita_summary_ha_formatted = ita_summary_ha %>%
+  rename("HA Group 1" = "s.1", "HA Group 2" = "s.2", "Uninfected" = "s.neg") %>%
   select(-index, -rowname) %>%
   relocate(stat, .after = last_col()) %>%
   relocate(p.value, .before = stat) %>%
-  relocate(Genus, .before = ha_group_1) %>%
+  relocate(Genus, .before = "HA Group 1") %>%
   mutate(stat = round(stat, 3)) %>%
-  rename(indicator_value = stat, p_value = p.value)
+  rename("Indicator Value" = stat, "P value" = p.value)
+
+# Re-label indicator 0/1 markers with ✘/✔
+for(col in colnames(ita_summary_ha_formatted[,2:4])) {
+  ita_summary_ha_formatted[, col] = replace(ita_summary_ha_formatted[, col],
+                                            which(1 == ita_summary_ha_formatted[, col]),
+                                            "✔")
+  ita_summary_ha_formatted[, col] = replace(ita_summary_ha_formatted[, col],
+                                            which(0 == ita_summary_ha_formatted[, col]),
+                                            "✘")
+}
 
 # Display formatted summary table
-ita_summary_ha_formatted_grp
+ita_summary_ha_formatted
 ```
 
-### 5.2 HA Subtype Table
-
-```{r}
-# Get indicator genera names from indicator genera ASVs
-indicator_genera_ha_stp = data.frame(ps_filt@tax_table) %>%
-  rownames_to_column() %>%
-  filter(rowname %in% rownames(ita_ha_stp)) %>%
-  select(rowname, Genus)
-indicator_genera_ha_stp$Genus = indicator_genera_ha_stp$Genus %>% str_replace("g__", "")
-
-# Generate summary table
-ita_summary_ha_stp = ita_ha_stp %>%
-  rownames_to_column() %>%
-  left_join(indicator_genera_ha_stp)
-
-# Format summary table for ease of interpretation
-ita_summary_ha_formatted_stp = ita_summary_ha_stp %>%
-  rename(H2 = "s.2", H3 = "s.3", H4 = "s.4", H5 = "s.5", neg = "s.neg") %>%
-  select(-index, -rowname) %>%
-  relocate(stat, .after = last_col()) %>%
-  relocate(p.value, .before = stat) %>%
-  relocate(Genus, .before = H2) %>%
-  mutate(stat = round(stat, 3)) %>%
-  rename(indicator_value = stat, p_value = p.value)
-
-# Display formatted summary table
-ita_summary_ha_formatted_stp
-```
-
-### 5.3 NA Subtype Table
+### 5.2 NA Group Table
 
 ```{r}
 # Get indicator genera names from indicator genera ASVs
@@ -146,31 +121,52 @@ ita_summary_na = ita_na %>%
 
 # Format summary table for ease of interpretation
 ita_summary_na_formatted = ita_summary_na %>%
-  rename(N1 = "s.1", N2 = "s.2", N3 = "s.3", N5 = "s.5",
-         N6 = "s.6", N7 = "s.7", N8 = "s.8", N9 = "s.9", neg = "s.neg") %>%
+  rename("NA Group 1" = "s.1", "NA Group 2" = "s.2", "Uninfected" = "s.neg") %>%
   select(-index, -rowname) %>%
   relocate(stat, .after = last_col()) %>%
   relocate(p.value, .before = stat) %>%
-  relocate(Genus, .before = N1) %>%
+  relocate(Genus, .before = "NA Group 1") %>%
   mutate(stat = round(stat, 3)) %>%
-  rename(indicator_value = stat, p_value = p.value)
+  rename("Indicator Value" = stat, "P value" = p.value)
+
+# Re-label indicator 0/1 markers with ✘/✔
+for(col in colnames(ita_summary_na_formatted[,2:4])) {
+  ita_summary_na_formatted[, col] = replace(ita_summary_na_formatted[, col],
+                                            which(1 == ita_summary_na_formatted[, col]),
+                                            "✔")
+  ita_summary_na_formatted[, col] = replace(ita_summary_na_formatted[, col],
+                                            which(0 == ita_summary_na_formatted[, col]),
+                                            "✘")
+}
 
 # Display formatted summary table
 ita_summary_na_formatted
 ```
 
-### 5.4 Save HA & NA Tables
+### 5.3 Save HA & NA Tables
 
 ```{r}
-pdf("../visualizations/tables/ita_ha_grp_summary.pdf", paper = "USr")
-grid.table(ita_summary_ha_formatted_grp, theme = ttheme_default(base_size = 8), rows = NULL)
+# HA Table
+cairo_pdf("../visualizations/tables/ita_ha_summary.pdf")
+ha_g = tableGrob(ita_summary_ha_formatted, theme = ttheme_minimal(base_size = 8), rows = NULL)
+ha_g = gtable_add_grob(ha_g, grobs = segmentsGrob(x0 = unit(0, "npc"),
+                                            y0 = unit(0, "npc"),
+                                            x1 = unit(1, "npc"),
+                                            y1 = unit(0, "npc")),
+                    t = 1, l = 1, b = 1, r = ncol(ha_g))
+grid.newpage()
+grid.draw(ha_g)
 dev.off()
 
-pdf("../visualizations/tables/ita_ha_stp_summary.pdf", paper = "USr")
-grid.table(ita_summary_ha_formatted_stp, theme = ttheme_default(base_size = 8), rows = NULL)
-dev.off()
-
-pdf("../visualizations/tables/ita_na_summary.pdf", paper = "USr")
-grid.table(ita_summary_na_formatted, theme = ttheme_default(base_size = 8), rows = NULL)
+# NA Table
+cairo_pdf("../visualizations/tables/ita_na_summary.pdf")
+na_g = tableGrob(ita_summary_na_formatted, theme = ttheme_minimal(base_size = 8), rows = NULL)
+na_g = gtable_add_grob(na_g, grobs = segmentsGrob(x0 = unit(0, "npc"),
+                                            y0 = unit(0, "npc"),
+                                            x1 = unit(1, "npc"),
+                                            y1 = unit(0, "npc")),
+                    t = 1, l = 1, b = 1, r = ncol(na_g))
+grid.newpage()
+grid.draw(na_g)
 dev.off()
 ```
