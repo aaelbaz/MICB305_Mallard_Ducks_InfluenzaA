@@ -58,7 +58,6 @@ ha1_out = ancombc2(data = ps_filt,
                prv_cut = 0.3) # increased due to small sample size
 
 ha1_statistical_table = ha1_out$res
-view(ha1_statistical_table)
 
 ### HA Group 2 as reference ###
 # subset to only group2 and neg
@@ -72,13 +71,12 @@ ha2_out = ancombc2(data = sub_ps_ha,
                prv_cut = 0.3) # increased due to small sample size
 
 ha2_statistical_table = ha2_out$res
-view(ha2_statistical_table)
 ```
 
 ## Volcano Plots
 
 ```{r}
-### H1 vs H2 ### 
+### HA Group1 vs HA Group2 ### 
 ha1_statistical_table$association_ = ifelse(ha1_statistical_table$q_ha_group2 < 0.05 & ha1_statistical_table$lfc_ha_group2 > 0, "Enriched", "Not significant")
 ha1_statistical_table$association = ifelse(ha1_statistical_table$q_ha_group2 < 0.05 & ha1_statistical_table$lfc_ha_group2 < 0, "Depleted",ha1_statistical_table$association)
 
@@ -92,7 +90,7 @@ vplot_h1h2 <- ggplot(ha1_statistical_table, aes(x = as.numeric(lfc_ha_group2), y
 
 vplot_h1h2
 
-### H1 vs neg ### 
+### HA Group1 vs neg ### 
 ha1_statistical_table$association_ = ifelse(ha1_statistical_table$q_ha_groupneg < 0.05 & ha1_statistical_table$lfc_ha_groupneg > 0, "Enriched", "Not significant")
 ha1_statistical_table$association = ifelse(ha1_statistical_table$q_ha_groupneg < 0.05 & ha1_statistical_table$lfc_ha_groupneg < 0, "Depleted",ha1_statistical_table$association)
 
@@ -106,7 +104,7 @@ vplot_h1neg <- ggplot(ha1_statistical_table, aes(x = as.numeric(lfc_ha_groupneg)
 
 vplot_h1neg
 
-### H2 vs neg ###
+### HA Group2 vs neg ###
 ha2_statistical_table$association_ = ifelse(ha2_statistical_table$q_ha_groupneg < 0.05 & ha2_statistical_table$lfc_ha_groupneg > 0, "Enriched", "Not significant")
 ha2_statistical_table$association = ifelse(ha2_statistical_table$q_ha_groupneg < 0.05 & ha2_statistical_table$lfc_ha_groupneg < 0, "Depleted", ha2_statistical_table$association)
 
@@ -134,12 +132,10 @@ genus_tax <- data.frame(
 # Filter stats to only include taxa that are differentially abundant between H1 group and H2 group
 h1h2_taxa_plot = ha1_statistical_table %>% 
   filter(diff_robust_ha_group2==T) %>%
-  left_join(tax_df, by = "taxon")
+  left_join(genus_tax, by = "taxon")
 
 
 # Plot the log 2 fold changes
-# Note: you'll have to figure out how to plot the genera names instead of the
-# representative ASV names!
 
 h1h2_taxa_plot %>%
   ggplot(aes(Genus,lfc_ha_group2)) +
@@ -150,11 +146,9 @@ h1h2_taxa_plot %>%
 # Filter stats to only include taxa that are differentially abundant between H1 group and negative group
 h1neg_taxa_plot = ha1_statistical_table %>% 
   filter(diff_robust_ha_groupneg==T) %>%
-  left_join(tax_df, by = "taxon")
+  left_join(genus_tax, by = "taxon")
 
 # Plot the log 2 fold changes
-# Note: you'll have to figure out how to plot the genera names instead of the
-# representative ASV names!
 
 h1neg_taxa_plot %>%
   ggplot(aes(Genus,lfc_ha_groupneg)) +
@@ -166,11 +160,9 @@ h1neg_taxa_plot %>%
 # Filter stats to only include taxa that are differentially abundant between H2 group and negative group
 h2neg_taxa_plot = ha2_statistical_table %>% 
   filter(diff_robust_ha_groupneg==T) %>%
-  left_join(tax_df, by = "taxon")
+  left_join(genus_tax, by = "taxon")
 
 # Plot the log 2 fold changes
-# Note: you'll have to figure out how to plot the genera names instead of the
-# representative ASV names!
 
 h2neg_taxa_plot %>%
   ggplot(aes(Genus,lfc_ha_groupneg)) +
@@ -199,7 +191,6 @@ na1_out = ancombc2(data = ps_filt,
                prv_cut = 0.3) # increased due to small sample size
 
 na1_statistical_table = na1_out$res
-view(na1_statistical_table)
 
 ### NA Group 2 as reference ###
 sub_ps_na <- subset_samples(ps_filt, na_group %in% c("2", "neg")) # subseting data to remove ha group_1
@@ -210,13 +201,12 @@ na2_out = ancombc2(data = sub_ps_na,
                prv_cut = 0.3) # increased due to small sample size
 
 na2_statistical_table = na2_out$res
-view(na2_statistical_table)
 ```
 
 ## Volcano Plots
 
 ```{r}
-### H1 vs H2 ### 
+### NA Group1 vs NA Group2 ### 
 na1_statistical_table$association_ = ifelse(na1_statistical_table$q_na_group2 < 0.05 & na1_statistical_table$lfc_na_group2 > 0, "Enriched", "Not significant")
 na1_statistical_table$association = ifelse(na1_statistical_table$q_na_group2 < 0.05 & na1_statistical_table$lfc_na_group2 < 0, "Depleted",na1_statistical_table$association)
 
@@ -230,7 +220,7 @@ vplot_n1n2 <- ggplot(na1_statistical_table, aes(x = as.numeric(lfc_na_group2), y
 
 vplot_n1n2
 
-### H1 vs neg ### 
+### NA Group1 vs neg ### 
 na1_statistical_table$association_ = ifelse(na1_statistical_table$q_na_groupneg < 0.05 & na1_statistical_table$lfc_na_groupneg > 0, "Enriched", "Not significant")
 na1_statistical_table$association = ifelse(na1_statistical_table$q_na_groupneg < 0.05 & na1_statistical_table$lfc_na_groupneg < 0, "Depleted",na1_statistical_table$association)
 
@@ -244,7 +234,7 @@ vplot_n1neg <- ggplot(na1_statistical_table, aes(x = as.numeric(lfc_na_groupneg)
 
 vplot_n1neg
 
-### H2 vs neg ###
+### NA Group2 vs neg ###
 na2_statistical_table$association_ = ifelse(na2_statistical_table$q_na_groupneg < 0.05 & na2_statistical_table$lfc_na_groupneg > 0, "Enriched", "Not significant")
 na2_statistical_table$association = ifelse(na2_statistical_table$q_na_groupneg < 0.05 & na2_statistical_table$lfc_na_groupneg < 0, "Depleted", na2_statistical_table$association)
 
@@ -262,30 +252,26 @@ vplot_h2neg
 ## Log2Fold Change Plots
 
 ```{r}
-### HA Group 1 vs HA Group 2 ### 
+### NA Group 1 vs NA Group 2 ### 
 # Filter stats to only include taxa that are differentially abundant between N1 group and N2 group
 n1n2_taxa_plot = na1_statistical_table %>% 
   filter(diff_robust_na_group2==T) %>%
-  left_join(tax_df, by = "taxon")
+  left_join(genus_tax, by = "taxon")
 
 # Plot the log 2 fold changes
-# Note: you'll have to figure out how to plot the genera names instead of the
-# representative ASV names!
 
 n1n2_taxa_plot %>%
   ggplot(aes(Genus,lfc_na_group2)) +
   geom_col() +
   coord_flip()
 
-### HA Group 1 vs neg ### 
+### NA Group 1 vs neg ### 
 # Filter stats to only include taxa that are differentially abundant between N1 group and negative group
 n1neg_taxa_plot = na1_statistical_table %>% 
   filter(diff_robust_na_groupneg==T) %>%
-  left_join(tax_df, by = "taxon")
+  left_join(genus_tax, by = "taxon")
 
 # Plot the log 2 fold changes
-# Note: you'll have to figure out how to plot the genera names instead of the
-# representative ASV names!
 
 n1neg_taxa_plot %>%
   ggplot(aes(Genus,lfc_na_groupneg)) +
@@ -293,15 +279,13 @@ n1neg_taxa_plot %>%
   coord_flip()
 
 
-### HA Group 2 vs neg ### 
+### NA Group 2 vs neg ### 
 # Filter stats to only include taxa that are differentially abundant between N2 group and negative group
 n2neg_taxa_plot = na2_statistical_table %>% 
   filter(diff_robust_na_groupneg==T) %>%
-  left_join(tax_df, by = "taxon")
+  left_join(genus_tax, by = "taxon")
 
-# Plot the log 2 fold changes
-# Note: you'll have to figure out how to plot the genera names instead of the
-# representative ASV names!
+# Plot the log 2 fold change #
 
 n2neg_taxa_plot %>%
   ggplot(aes(x=Genus, y=lfc_na_groupneg)) +
