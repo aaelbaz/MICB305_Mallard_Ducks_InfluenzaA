@@ -198,7 +198,7 @@ p_formatted_HA_group = pdata_HA_group_shannon %>% ggplot(aes(ha_group,value,
 theme_classic(base_size=16)+
   ylab("Shannon Diversity") + xlab(NULL) +
   theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12)) +
-  labs(fill= "HA Phylogenetic Group")
+  labs(fill= "HA Phylogenetic Groups")
 p_formatted_HA_group
 
 ```
@@ -223,6 +223,43 @@ P_signif_group_HA <- p_formatted_HA_group + geom_signif(
   )
 P_signif_group_HA
 ```
+NA Phylogenetic Groups
+```{r}
+set.seed(360)
+p_NA_group_shannon = plot_richness(psrare, x="na_group",
+                        measures = c("Shannon"),
+                  color= "na_group")
+
+pdata_NA_group_shannon = p_NA_group_shannon$data
+
+p_formatted_NA_group = pdata_NA_group_shannon %>% ggplot(aes(na_group,value, 
+                                                             fill = na_group)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+  geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
+theme_classic(base_size=16)+
+  ylab("Shannon Diversity") + xlab(NULL) +
+  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12)) +
+  labs(fill= "NA Phylogenetic Groups")
+p_formatted_NA_group
+
+```
+```{r}
+df_NA_group_shannon <- data.frame(na_group = as.factor(pdata_NA_group_shannon$na_group), value = pdata_NA_group_shannon$value)
+#Kruskal-Wallis and Dunn's test as post-hoc
+res_sig_group_NA <-dunn.test(df_NA_group_shannon$value, df_NA_group_shannon$na_group, kw=TRUE, method = "bh")
+
+view(res_sig_group_NA)
+```
+```{r}
+P_signif_group_NA <- p_formatted_NA_group + geom_signif(
+    comparison = list( c("2","neg")),
+    y_position = c(4),
+    annotations = c("*")
+  )
+P_signif_group_NA
+```
+
+
 
 Faith's Diversity
 
@@ -309,9 +346,61 @@ faith_HA_aggr_sig <- dunn.test(faith_HA_aggr_df$value, faith_HA_aggr_df$ha_aggr,
 HA Phylogenetic Groups
 
 ```{r}
+faith_formatted_HA_group = faith_metadata %>% ggplot(aes(ha_group,PD, 
+                                                             fill = ha_group)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+  geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
+theme_classic(base_size=16)+
+  ylab("Faith's Diversity") + xlab(NULL) +
+  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12)) +
+  labs(fill= "HA Phylogenetic Groups")
+faith_formatted_HA_group
+```
+
+
+```{r}
 faith_HA_group_df <- data.frame(ha_group = as.factor(faith_metadata$ha_group), 
                                                  value = faith_metadata$PD)
 faith_HA_group_sig <- dunn.test(faith_HA_group_df$value, faith_HA_group_df$ha_group, kw=TRUE, method = "bh")
+
+view(faith_HA_group_sig)
+```
+```{r}
+P_faith_group_HA <- faith_formatted_HA_group + geom_signif(
+    comparison = list(c("1", "neg"), c("2","neg")),
+    y_position = c(13.5,13),
+    annotations = c("**","*")
+  )
+P_faith_group_HA
+```
+
+NA Phylogenetic Group
+```{r}
+faith_formatted_NA_group = faith_metadata %>% ggplot(aes(na_group,PD, 
+                                                             fill = na_group)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.6) +
+  geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
+theme_classic(base_size=16)+
+  ylab("Faith's Diversity") + xlab(NULL) +
+  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12)) +
+  labs(fill= "NA Phylogenetic Groups")
+faith_formatted_NA_group
+```
+
+
+
+```{r}
+faith_NA_group_df <- data.frame(na_group = as.factor(faith_metadata$na_group), 
+                                                 value = faith_metadata$PD)
+faith_NA_group_sig <- dunn.test(faith_NA_group_df$value, faith_NA_group_df$na_group, kw=TRUE, method = "bh")
+```
+```{r}
+P_faith_group_NA <- faith_formatted_NA_group + geom_signif(
+    comparison = list(c("1", "neg"), c("2","neg")),
+    y_position = c(13.5,13),
+    annotations = c("*","**")
+  )
+P_faith_group_NA
 ```
 
  
