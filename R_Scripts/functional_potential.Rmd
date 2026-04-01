@@ -19,20 +19,37 @@ install_github("biobakery/maaslin2")
 # This code is attributed to the creators of the MICB 305 2025W2 GitHub and is cited within our research paper.
 source('reference_functions/ggpicrust2_calculate_log2fc.R')
 source('reference_functions/ggpicrust2_errorbar_function_fixed.R')
-
-# Some internal functions appear inaccessible in ggpicrust2, so I am importing the internal functions separately for now
-source('reference_functions/data_utils.R')
 ```
 
-## 2. Load Data
+## 2. Load Data + Initial Metadata Wrangling
 
 Functional annotations were generated via command-line PICRUSt2 and then exported into this project under the `../processed_data/` directory.
 
 ```{r}
+# Load in metadata & functional pathway data
 metadata = data.frame(readRDS('../processed_data/phyloseq_taxonomy.rds')@sam_data) %>%
   rownames_to_column()
 
 metacyc_path_abun = read.delim('../processed_data/path_abun_unstrat.tsv', row.names = 1)
+
+
+# Rename and order infection status groups so the downstream figures are more interpretable
+metadata$influenza_status = metadata$influenza_status %>%
+  replace_values(from = "Pos", to = "infected") %>%
+  replace_values(from = "Neg", to = "uninfected") %>%
+  factor(levels = c("infected", "uninfected"))
+
+# Generate metadata data frame with uninfected samples filtered out for HA Group & NA Group analyses. Also, rename grouping variable so the downstream figures are more interpretable
+metadata_only_infected = filter(metadata, ha_group != "neg" & na_group != "neg")
+metadata_only_infected$ha_group = ifelse(metadata_only_infected$ha_group == "1",
+                                         "HA Group 1",
+                                         "HA Group 2")
+metadata_only_infected$na_group = ifelse(metadata_only_infected$na_group == "1",
+                                         "NA Group 1",
+                                         "NA Group 2")
+
+# Generate metacyc pathway abundance data frame with uninfected samples filtered out for HA Group & NA Group analyses
+metacyc_path_abun_only_infected = metacyc_path_abun[, colnames(metacyc_path_abun) %in% metadata_only_infected$rowname]
 ```
 
 ## 3. Set Seed
@@ -43,72 +60,256 @@ set.seed(1234)
 
 ## 4. Conduct Functional Potential Analysis (via ggpicrust2)
 
-This analysis examines differences in predicted functional potential between HA group 1 and HA group 2 influenza-infected mallards.
+This analysis examines differences in predicted functional potential between uninfected and influenza-infected mallards, HA Group 1 & HA Group 2 influenza-infected mallards, and NA Group 1 & NA Group 2 influenza-infected mallards.
+
+### 4.1 Infected vs. Uninfected
 
 ```{r}
-# Filter out uninfected samples and rename groups so downstream figure is more interpretable
-metadata = filter(metadata, ha_group != "neg")
-metadata$ha_group = paste("ha_group", metadata$ha_group, sep="_")
-
-metacyc_path_abun = metacyc_path_abun[, colnames(metacyc_path_abun) %in% metadata$rowname]
-
-
 # Run pathway differential abundance analysis (Maaslin2 method)
-daa_df = pathway_daa(abundance = metacyc_path_abun,
+daa_infection = pathway_daa(abundance = metacyc_path_abun,
                      metadata = metadata,
+                     group = "influenza_status",
+                     daa_method = "Maaslin2",
+                     select = NULL,
+                     reference = NULL) %>%
+  select(-log2_fold_change)
+
+# Get correct log2 fold change values; currently, pathway_daa using the Maaslin2 method uses incorrect log2 fold changes.
+log2fc_infection = fix_lfc(abundance = metacyc_path_abun,
+                           metadata = metadata,
+                           group = "influenza_status",
+                           reference = "uninfected") %>%
+  select(feature, log2_fold_change)
+
+# Replace incorrect log2 fold change values with the correct ones
+daa_infection = left_join(daa_infection, log2fc_infection, by="feature") %>%
+  relocate(log2_fold_change, .before = adj_method)
+
+
+# Add pathway annotations
+daa_infection = pathway_annotation(pathway = "MetaCyc", daa_results_df = daa_infection)
+```
+
+### 4.2 HA Group 1 vs. HA Group 2
+
+```{r}
+# Run pathway differential abundance analysis (Maaslin2 method)
+daa_ha = pathway_daa(abundance = metacyc_path_abun_only_infected,
+                     metadata = metadata_only_infected,
                      group = "ha_group",
                      daa_method = "Maaslin2",
                      select = NULL,
-                     reference = NULL)
+                     reference = NULL) %>%
+  select(-log2_fold_change)
 
 # Get correct log2 fold change values; currently, pathway_daa using the Maaslin2 method uses incorrect log2 fold changes.
-log2_fc = fix_lfc(abundance = metacyc_path_abun,
-                  metadata = metadata,
-                  group = "ha_group",
-                  reference = "ha_group_2") %>%
+log2fc_ha = fix_lfc(abundance = metacyc_path_abun_only_infected,
+                         metadata = metadata_only_infected,
+                         group = "ha_group",
+                         reference = "HA Group 2") %>%
   select(feature, log2_fold_change)
 
-# Add correct log2 fold change values to the differential abundance analysis data frame
-daa_df = left_join(daa_df, log2_fc, by="feature")
+# Replace incorrect log2 fold change values with the correct ones
+daa_ha = left_join(daa_ha, log2fc_ha, by="feature") %>%
+  relocate(log2_fold_change, .before = adj_method)
 
 # Add pathway annotations
-daa_annotated_df = pathway_annotation(pathway = "MetaCyc", daa_results_df = daa_df)
+daa_ha = pathway_annotation(pathway = "MetaCyc", daa_results_df = daa_ha)
 ```
 
-## 5. Generate Figure (Bar plot with most significant pathways)
+### 4.3 NA Group 1 vs. NA Group 2
+
+```{r}
+# Run pathway differential abundance analysis (Maaslin2 method)
+daa_na = pathway_daa(abundance = metacyc_path_abun_only_infected,
+                     metadata = metadata_only_infected,
+                     group = "na_group",
+                     daa_method = "Maaslin2",
+                     select = NULL,
+                     reference = NULL) %>%
+  select(-log2_fold_change)
+
+# Get correct log2 fold change values; currently, pathway_daa using the Maaslin2 method uses incorrect log2 fold changes.
+log2fc_na = fix_lfc(abundance = metacyc_path_abun_only_infected,
+                         metadata = metadata_only_infected,
+                         group = "na_group",
+                         reference = "NA Group 2") %>%
+  select(feature, log2_fold_change)
+
+# Replace incorrect log2 fold change values with the correct ones
+daa_na = left_join(daa_na, log2fc_na, by="feature") %>%
+  relocate(log2_fold_change, .before = adj_method)
+
+# Add pathway annotations
+daa_na = pathway_annotation(pathway = "MetaCyc", daa_results_df = daa_na)
+```
+
+## 5. Generate Figures (Bar plots with most significant pathways)
+
+### 5.1 Infected vs. Uninfected
+
+An adjusted p-value cutoff of \< 0.05 and absolute log2 fold change cutoff of \>= 2 was applied in order to highlight the most significant results while maintaining figure readability.
 
 ```{r}
 # Create column containing both pathway names & annotations
-daa_annotated_df = daa_annotated_df %>%
-  mutate(label = paste(feature, ifelse(is.na(description), "No description available", description), sep = "; "))
+daa_infection = daa_infection %>%
+  mutate(label = paste(feature, ifelse(is.na(description),
+                                       "No description available",
+                                       description),
+                       sep = "; "))
 
 # Filter for significant results
-daa_annotated_df_filt = filter(daa_annotated_df, abs(log2_fold_change) >= 4)# & p_adjust < 0.05)
+daa_infection_filt = filter(daa_infection, abs(log2_fold_change) >= 2 & p_adjust < 0.05)
 
 # Generate pathway errorbar plot
-peb = pathway_errorbar_fixed(abundance = metacyc_path_abun,
-                             daa_results_df = daa_annotated_df_filt,
-                             Group = metadata$ha_group,
+peb_infection = pathway_errorbar_fixed(abundance = metacyc_path_abun,
+                                       daa_results_df = daa_infection_filt,
+                                       Group = metadata$influenza_status,
+                                       order_by_log = TRUE,
+                                       ko_to_kegg = FALSE,
+                                       p_value_bar = TRUE,
+                                       x_lab = "label")
+```
+
+### 5.2 HA Group 1 vs. HA Group 2
+
+There were no significant comparisons between HA groups. However, in order to produce a readable figure and highlight the comparisons with the lowest p-values and largest difference between groups, an adjusted p-value cutoff of \< 0.95 alongside an absolute log2 fold change cutoff of \>= 2.5 was applied.
+
+```{r}
+# Create column containing both pathway names & annotations
+daa_ha = daa_ha %>%
+  mutate(label = paste(feature, ifelse(is.na(description),
+                                       "No description available",
+                                       description),
+                       sep = "; "))
+
+# Filter for significant results
+daa_ha_filt = filter(daa_ha, abs(log2_fold_change) >= 2.5 & p_adjust < 0.95)
+
+# Generate pathway errorbar plot
+peb_ha = pathway_errorbar_fixed(abundance = metacyc_path_abun_only_infected,
+                             daa_results_df = daa_ha_filt,
+                             Group = metadata_only_infected$ha_group,
                              order_by_log = TRUE,
                              ko_to_kegg = FALSE,
                              p_value_bar = TRUE,
+                             p_values_threshold = 1,
                              x_lab = "label")
 ```
 
-## 6. Save Figure
+### 5.3 NA Group 1 vs. NA Group 2
+
+There were no significant comparisons between NA groups. However, in order to produce a readable figure and highlight the comparisons with the lowest p-values and largest difference between groups, an adjusted p-value cutoff of \< 0.65 alongside an absolute log2 fold change cutoff of \>= 2.5 was applied.
 
 ```{r}
-ggsave("../visualizations/figures/functional_potential.png", plot = peb, width = 18, height = 10)
+# Create column containing both pathway names & annotations
+daa_na = daa_na %>%
+  mutate(label = paste(feature, ifelse(is.na(description),
+                                       "No description available",
+                                       description),
+                       sep = "; "))
+
+# Filter for significant results
+daa_na_filt = filter(daa_na, abs(log2_fold_change) >= 2.5 & p_adjust < 0.65)
+
+# Generate pathway errorbar plot
+peb_na = pathway_errorbar_fixed(abundance = metacyc_path_abun_only_infected,
+                             daa_results_df = daa_na_filt,
+                             Group = metadata_only_infected$na_group,
+                             order_by_log = TRUE,
+                             ko_to_kegg = FALSE,
+                             p_value_bar = TRUE,
+                             p_values_threshold = 1,
+                             x_lab = "label")
 ```
 
-## 7. Additional Useful Information
+## 6. Generate Significance & Effect Size Summary Plots
+
+### 6.1 Adjusted P-value Distributions by Comparison
 
 ```{r}
-num_pathways = nrow(daa_annotated_df)
-num_signif = nrow(filter(daa_annotated_df, p_adjust < 0.05))
-prop_signif = num_signif/num_pathways
+# Aggregate adjusted p-value data into a single data frame
+daa_p_adj_summary = data.frame("Uninfected_vs._Infected" = daa_infection$p_adjust,
+                               "HA_Group_1_vs._HA_Group_2" = daa_ha$p_adjust,
+                               "NA_Group_1_vs._NA_Group_2" = daa_na$p_adjust)
 
-print(paste("Pathways analyzed:", num_pathways))
-print(paste("Significant pahtways (p_adjust < 0.05):", num_signif))
-print(paste("Proportion significant:", round(prop_signif, 2)))
+# Pivot aggregated data, repair group names, remove NAs, & order groups as desired for plotting
+daa_p_adj_summary = pivot_longer(daa_p_adj_summary,
+                                 cols = everything(),
+                                 names_to = "group",
+                                 values_to = "p_adj") %>%
+  na.omit()
+
+daa_p_adj_summary$group = sapply(daa_p_adj_summary$group,
+                                 str_replace_all,
+                                 pattern = "_",
+                                 replacement = " ") %>%
+  factor(levels = c("Uninfected vs. Infected",
+                    "HA Group 1 vs. HA Group 2",
+                    "NA Group 1 vs. NA Group 2"))
+
+
+# Generate adjusted p-value distribution summary plot
+daa_p_adj_summary_plot = ggplot(daa_p_adj_summary, aes(x = p_adj)) +
+  geom_histogram(binwidth = 0.02, colour = "black", fill = "lightgrey", linewidth = 0.2) +
+  facet_wrap(~group, ncol = 1, scales="free_y") +
+  labs(x = "Adjusted P value", y = "Count") +
+  theme_bw() +
+  theme(text = element_text(size = 14, hjust = 0.5))
+# Mark the means in red on the histograms?
+```
+
+### 6.2 Log2 Fold Change Distributions by Comparison
+
+```{r}
+# Aggregate adjusted p-value data into a single data frame
+daa_log2fc_summary = data.frame("Uninfected_vs._Infected" = daa_infection$log2_fold_change,
+                                "HA_Group_1_vs._HA_Group_2" = daa_ha$log2_fold_change,
+                                "NA_Group_1_vs._NA_Group_2" = daa_na$log2_fold_change)
+
+# Pivot aggregated data, repair group names, remove NAs, & order groups as desired for plotting
+daa_log2fc_summary = pivot_longer(daa_log2fc_summary,
+                                  cols = everything(),
+                                  names_to = "group",
+                                  values_to = "log2fc") %>%
+  na.omit()
+
+daa_log2fc_summary$group = sapply(daa_log2fc_summary$group,
+                                  str_replace_all,
+                                  pattern = "_",
+                                  replacement = " ") %>%
+  factor(levels = c("Uninfected vs. Infected",
+                    "HA Group 1 vs. HA Group 2",
+                    "NA Group 1 vs. NA Group 2"))
+
+
+# Generate log2 fold change distribution summary plot
+daa_log2fc_summary_plot = ggplot(daa_log2fc_summary, aes(x = log2fc)) +
+  geom_histogram(binwidth = 0.25, colour = "black", fill = "lightgrey", linewidth = 0.2) +
+  facet_wrap(~group, ncol = 1, scales="free_y") +
+  labs(x = "Log2 Fold Change", y = "Count") +
+  theme_bw() +
+  theme(text = element_text(size = 14, hjust = 0.5))
+# Mark the means in red on the histograms?
+```
+
+## 7. Save Figures
+
+```{r}
+# Functional potential figures
+ggsave("../visualizations/figures/functional_analysis/functional_potential_control_infected.png", plot = peb_infection, width = 18, height = 8)
+
+ggsave("../visualizations/figures/functional_analysis/functional_potential_ha_groups.png",
+       plot = peb_ha, width = 18, height = 8)
+
+ggsave("../visualizations/figures/functional_analysis/functional_potential_na_groups.png",
+       plot = peb_na, width = 18, height = 8)
+
+
+# Significance & effect size summary figures
+ggsave("../visualizations/figures/functional_analysis/p_adj_distribution_summary.png",
+       plot = daa_p_adj_summary_plot, width = 10, height = 6)
+
+ggsave("../visualizations/figures/functional_analysis/log2fc_distribution_summary.png",
+       plot = daa_log2fc_summary_plot, width = 10, height = 6)
 ```
