@@ -168,7 +168,69 @@ h2neg_taxa_plot %>%
   ggplot(aes(Genus,lfc_ha_groupneg)) +
   geom_col() +
   coord_flip()
+```
 
+Improved Plots
+
+```{r}
+### HA Group 1 vs Neg ###
+df_h1neg = ha1_statistical_table %>%
+  left_join(genus_tax, by = "taxon") 
+
+df_fig_h1neg = df_h1neg %>%
+    filter(diff_robust_ha_groupneg == T) %>% 
+    arrange(desc(lfc_ha_groupneg)) %>%
+    mutate(direct = ifelse(lfc_ha_groupneg > 0, "Positive LFC", "Negative LFC"),
+                  color = ifelse(passed_ss_ha_groupneg == 1, "aquamarine3", "black"))
+df_fig_h1neg$direct = factor(df_fig_h1neg$direct, 
+                           levels = c("Positive LFC", "Negative LFC"))
+  
+fig_h1neg = df_fig_h1neg %>%
+    ggplot(aes(x = Genus, y = lfc_ha_groupneg, fill = direct)) + 
+    geom_bar(stat = "identity", width = 0.7, color = "black", 
+             position = position_dodge(width = 0.4)) +
+    geom_errorbar(aes(ymin = lfc_ha_groupneg - se_ha_groupneg, ymax = lfc_ha_groupneg + se_ha_groupneg), 
+                  width = 0.2, position = position_dodge(0.05), color = "black") + 
+    labs(x = NULL, y = "Log2 Fold Change", 
+         title = "Log2 FC H1 Group/uninfected") + 
+    scale_fill_discrete(name = NULL) +
+    scale_color_discrete(name = NULL) +
+    theme_bw() + 
+    theme(plot.title = element_text(hjust = 0.5),
+          panel.grid.minor.y = element_blank(),
+          axis.text.x = element_text(angle = 60, hjust = 1,
+                                     color = df_fig_h1neg$color))
+fig_h1neg
+
+### HA Group 2 vs Neg ###
+df_h2neg = ha2_statistical_table %>%
+  left_join(genus_tax, by = "taxon") 
+
+df_fig_h2neg = df_h2neg %>%
+    filter(diff_robust_ha_groupneg == T) %>% 
+    mutate(direct = ifelse(lfc_ha_groupneg > 0, "Positive LFC", "Negative LFC"),
+                  color = ifelse(passed_ss_ha_groupneg == 1, "aquamarine3", "black")) %>%
+      arrange(desc(lfc_ha_groupneg))
+
+df_fig_h2neg$direct = factor(df_fig_h2neg$direct, 
+                           levels = c("Positive LFC", "Negative LFC"))
+  
+fig_h2neg = df_fig_h2neg %>%
+    ggplot(aes(x = Genus, y = lfc_ha_groupneg, fill = direct)) + 
+    geom_bar(stat = "identity", width = 0.7, color = "black", 
+             position = position_dodge(width = 0.4)) +
+    geom_errorbar(aes(ymin = lfc_ha_groupneg - se_ha_groupneg, ymax = lfc_ha_groupneg + se_ha_groupneg), 
+                  width = 0.2, position = position_dodge(0.05), color = "black") + 
+    labs(x = NULL, y = "Log2 Fold Change", 
+         title = "Log2 FC H2 Group/uninfected") + 
+    scale_fill_discrete(name = NULL) +
+    scale_color_discrete(name = NULL) +
+    theme_bw() + 
+    theme(plot.title = element_text(hjust = 0.5),
+          panel.grid.minor.y = element_blank(),
+          axis.text.x = element_text(angle = 60, hjust = 1,
+                                     color = df_fig_h2neg$color))
+fig_h2neg
 ```
 
 # NA Groups
