@@ -192,7 +192,7 @@ fig_h1neg = df_fig_h1neg %>%
     geom_errorbar(aes(ymin = lfc_ha_groupneg - se_ha_groupneg, ymax = lfc_ha_groupneg + se_ha_groupneg), 
                   width = 0.2, position = position_dodge(0.05), color = "black") + 
     labs(x = NULL, y = "Log2 Fold Change", 
-         title = "Log2 FC HA Group 1/uninfected") + 
+         title = "Log2 FC HA Group 1/Uninfected") + 
     scale_fill_discrete(name = NULL) +
     scale_color_discrete(name = NULL) +
     theme_bw() + 
@@ -224,7 +224,7 @@ fig_h2neg = df_fig_h2neg %>%
     geom_errorbar(aes(ymin = lfc_ha_groupneg - se_ha_groupneg, ymax = lfc_ha_groupneg + se_ha_groupneg), 
                   width = 0.2, position = position_dodge(0.05), color = "black") + 
     labs(x = NULL, y = "Log2 Fold Change", 
-         title = "Log2 FC HA Group 2/uninfected") + 
+         title = "Log2 FC HA Group 2/Uninfected") + 
     scale_fill_discrete(name = NULL) +
     scale_color_discrete(name = NULL) +
     theme_bw() + 
@@ -381,7 +381,7 @@ fig_n1neg = df_fig_n1neg %>%
     geom_errorbar(aes(ymin = lfc_na_groupneg - se_na_groupneg, ymax = lfc_na_groupneg + se_na_groupneg), 
                   width = 0.2, position = position_dodge(0.05), color = "black") + 
     labs(x = NULL, y = "Log2 Fold Change", 
-         title = "Log2 FC NA Group 1/uninfected") + 
+         title = "Log2 FC NA Group 1/Uninfected") + 
     scale_fill_discrete(name = NULL) +
     scale_color_discrete(name = NULL) +
     theme_bw() + 
@@ -413,7 +413,7 @@ fig_n2neg = df_fig_n2neg %>%
     geom_errorbar(aes(ymin = lfc_na_groupneg - se_na_groupneg, ymax = lfc_na_groupneg + se_na_groupneg), 
                   width = 0.2, position = position_dodge(0.05), color = "black") + 
     labs(x = NULL, y = "Log2 Fold Change", 
-         title = "Log2 FC NA Group 2/uninfected") + 
+         title = "Log2 FC NA Group 2/Uninfected") + 
     scale_fill_discrete(name = NULL) +
     scale_color_discrete(name = NULL) +
     theme_bw() + 
