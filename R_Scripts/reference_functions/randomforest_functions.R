@@ -95,7 +95,7 @@ run_rf = function(X, y, fold_list,
                                  number = number_of_folds, # 10 folds
                                  classProbs = TRUE, # Predicted class probabilities 
                                  # are returned instead of just class labels.
-                                 summaryFunction = multiClassSummary) # compute AUC
+                                 summaryFunction = twoClassSummary) # compute AUC
     
     # Use hyperparameter tuning to optimize each parameter.
     # Note that optimal settings are chosen based on ROC/AUC - prone to overfitting!
