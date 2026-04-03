@@ -118,9 +118,6 @@ df_noHA <- df_pivot_na |>
 
 df_final_na <- df_noHA|>
   select(-Sample)
-
-
-
 ```
 
 ## Running our RandomForest Model for HA and NA
@@ -135,7 +132,7 @@ outcome_na = df_final_na|>
 
 k = 10
 set.seed(420)
-folds = createFolds(outcome, k=k, list = TRUE)
+folds = createFolds(outcome_na, k=k, list = TRUE)
 
 str(folds)
 
@@ -190,6 +187,14 @@ roc_test = roc(pd_model$test_labels$true_labels,
 roc_train = roc(pd_model$train_labels$true_labels,
                 pd_model$train_labels$predicted_probabilities)
 
+roc_data = data.frame(Dataset = 'df',
+     Training_AUC = round(pd_model$auc_train, 2),
+     Training_AUC_CI = paste0(round(pd_model$auc_train_ci[1], 2), "-", 
+                              round(pd_model$auc_train_ci[2], 2)),
+     Testing_AUC = round(pd_model$auc_test, 2),
+     Testing_AUC_CI = paste0(round(pd_model$auc_test_ci[1], 2), "-", 
+                             round(pd_model$auc_test_ci[2], 2)))
+
 
 na_auc <- ggplot() +
   geom_line(aes(x = 1 - roc_train$specificities, 
@@ -209,13 +214,56 @@ na_auc <- ggplot() +
 
 na_auc
 
+```
+## Generating an importance graph for NA randomforest:
+
+``` {r}
+
+na_rf_importance_graph <- pd_model$importance %>% 
+  mutate(Feature = factor(.$Feature,levels = .$Feature)) %>% 
+  ggplot(aes(Feature,MeanDecreaseGini,fill=MeanDecreaseGini)) +
+  geom_col() +
+  theme_classic(base_size=18) +
+  theme(axis.text.x = element_text(angle=45, vjust = 1, hjust=1)) +
+  ylab('Importance (Gini)') + xlab(NULL)
+
+na_rf_importance_graph
+
+colnames(df_final_na)
+
+temp = ps_filt_na %>% 
+  subset_taxa(Genus==' g__Pedobacter') %>% 
+  psmelt()
+
+temp <- temp |>
+  filter(na_group != "neg")
+
+wilcox.test(Abundance ~ na_group, data = temp)
+
+pedobacter_graph = temp %>% ggplot(aes(na_group,Abundance)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(height=0, width = 0.25, alpha = .2) +
+  theme_classic(base_size=16) +
+  geom_signif(comparisons = list(c("1", "2")), map_signif_level = TRUE, textsize = 6)+
+  labs(x = "NA group", y = "CLR-Transformed Abundance") +
+  theme(axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16),
+        axis.text = element_text(size = 16))+
+  ylim(-3, 15)
+
+pedobacter_graph
+
 
 ```
 
 ## Saving our graphs
 ```{r}
+
 ggsave("../visualizations/figures/ha_randomforest.png", plot = ha_auc, width = 18, height = 10)
-ggsave("../visualizations/figures/na_randomforest.png", plot = ha_auc, width = 18, height = 10)
+ggsave("../visualizations/figures/na_randomforest_auc.png", plot = na_auc, width = 18, height = 10)
+ggsave("../visualizations/figures/na_randomforest_importance.png", plot = na_rf_importance_graph, width = 18, height = 10)
+ggsave("../visualizations/figures/na_randomforest_pedobacter.png", plot = pedobacter_graph, width = 18, height = 10)
+
 
 
 ```
