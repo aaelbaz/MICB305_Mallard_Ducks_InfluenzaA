@@ -77,24 +77,36 @@ ha2_statistical_table = ha2_out$res
 
 ```{r}
 ### HA Group1 vs HA Group2 ### 
-ha1_statistical_table$association_ = ifelse(ha1_statistical_table$q_ha_group2 < 0.05 & ha1_statistical_table$lfc_ha_group2 > 0, "Enriched", "Not significant")
-ha1_statistical_table$association = ifelse(ha1_statistical_table$q_ha_group2 < 0.05 & ha1_statistical_table$lfc_ha_group2 < 0, "Depleted",ha1_statistical_table$association)
+ha1_statistical_table$association_h1h2 = ifelse(ha1_statistical_table$q_ha_group2 < 0.05 & ha1_statistical_table$lfc_ha_group2 > 0, "Enriched", "Not significant")
+ha1_statistical_table$association_h1h2 = ifelse(ha1_statistical_table$q_ha_group2 < 0.05 & ha1_statistical_table$lfc_ha_group2 < 0, "Depleted",ha1_statistical_table$association_h1h2)
 
-vplot_h1h2 <- ggplot(ha1_statistical_table, aes(x = as.numeric(lfc_ha_group2), y = -log10(as.numeric(q_ha_group2)), color = association)) +
-  geom_point() +
+vplot_h1h2 <- ggplot(ha1_statistical_table, aes(x = as.numeric(lfc_ha_group2), y = -log10(as.numeric(q_ha_group2)), color = association_h1h2)) +
+  geom_point(size = 5) +
   labs(x = "Log2 Fold Change", y = "-log10(p-value)",
-       title = "Volcano Plot H1 vs H2") +
+       title = "HA Group 1 vs HA Group 2") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
-  theme_bw()
+  theme_bw() + 
+  scale_color_manual(values = c(
+  "Enriched" = "#F8766D",
+  "Depleted" = "aquamarine3",
+  "Not significant" = "grey"
+))+ 
+  theme(plot.title = element_text(hjust = 0.5, size = 30),
+          panel.grid.minor.y = element_blank(),
+          axis.title.x = element_text(size = 18),
+          axis.text.x = element_text(hjust = 1, size = 18),
+          axis.title.y = element_text(size = 18),
+          axis.text.y = element_text(hjust=1, size = 18),
+          legend.text = element_text(hjust = 1, size = 12))
 
 
 vplot_h1h2
 
 ### HA Group1 vs neg ### 
-ha1_statistical_table$association_ = ifelse(ha1_statistical_table$q_ha_groupneg < 0.05 & ha1_statistical_table$lfc_ha_groupneg > 0, "Enriched", "Not significant")
-ha1_statistical_table$association = ifelse(ha1_statistical_table$q_ha_groupneg < 0.05 & ha1_statistical_table$lfc_ha_groupneg < 0, "Depleted",ha1_statistical_table$association)
+ha1_statistical_table$association_h1neg = ifelse(ha1_statistical_table$q_ha_groupneg < 0.05 & ha1_statistical_table$lfc_ha_groupneg > 0, "Enriched", "Not significant")
+ha1_statistical_table$association_h1neg = ifelse(ha1_statistical_table$q_ha_groupneg < 0.05 & ha1_statistical_table$lfc_ha_groupneg < 0, "Depleted",ha1_statistical_table$association_h1neg)
 
-vplot_h1neg <- ggplot(ha1_statistical_table, aes(x = as.numeric(lfc_ha_groupneg), y = -log10(as.numeric(q_ha_groupneg)), color = association)) +
+vplot_h1neg <- ggplot(ha1_statistical_table, aes(x = as.numeric(lfc_ha_groupneg), y = -log10(as.numeric(q_ha_groupneg)), color = association_h1neg)) +
   geom_point() +
   labs(x = "Log2 Fold Change", y = "-log10(p-value)",
        title = "Volcano Plot H1 vs neg") +
@@ -105,10 +117,10 @@ vplot_h1neg <- ggplot(ha1_statistical_table, aes(x = as.numeric(lfc_ha_groupneg)
 vplot_h1neg
 
 ### HA Group2 vs neg ###
-ha2_statistical_table$association_ = ifelse(ha2_statistical_table$q_ha_groupneg < 0.05 & ha2_statistical_table$lfc_ha_groupneg > 0, "Enriched", "Not significant")
-ha2_statistical_table$association = ifelse(ha2_statistical_table$q_ha_groupneg < 0.05 & ha2_statistical_table$lfc_ha_groupneg < 0, "Depleted", ha2_statistical_table$association)
+ha2_statistical_table$association_h2neg = ifelse(ha2_statistical_table$q_ha_groupneg < 0.05 & ha2_statistical_table$lfc_ha_groupneg > 0, "Enriched", "Not significant")
+ha2_statistical_table$association_h2neg = ifelse(ha2_statistical_table$q_ha_groupneg < 0.05 & ha2_statistical_table$lfc_ha_groupneg < 0, "Depleted", ha2_statistical_table$association_h2neg)
 
-vplot_h2neg <- ggplot(ha2_statistical_table, aes(x = as.numeric(lfc_ha_groupneg), y = -log10(as.numeric(q_ha_groupneg)), color = association)) +
+vplot_h2neg <- ggplot(ha2_statistical_table, aes(x = as.numeric(lfc_ha_groupneg), y = -log10(as.numeric(q_ha_groupneg)), color = association_h2neg)) +
   geom_point() +
   labs(x = "Log2 Fold Change", y = "-log10(p-value)",
        title = "Volcano Plot H2 vs neg") +
@@ -122,57 +134,13 @@ vplot_h2neg
 ## Log2Fold Change Plots
 
 ```{r}
-# extract Genus taxonomy from phyloseq for downstream plots
+### extract Genus taxonomy from phyloseq for downstream plots ###
+# this is needed for labeling Genus names instead of ASV names, for both HA and NA groupings
 genus_tax <- data.frame(
   taxon = taxa_names(ps_filt),
   Genus = as.data.frame(tax_table(ps_filt))$Genus
 )
 
-### HA Group 1 vs HA Group 2 ### 
-# Filter stats to only include taxa that are differentially abundant between H1 group and H2 group
-h1h2_taxa_plot = ha1_statistical_table %>% 
-  filter(diff_robust_ha_group2==T) %>%
-  left_join(genus_tax, by = "taxon")
-
-
-# Plot the log 2 fold changes
-
-h1h2_taxa_plot %>%
-  ggplot(aes(Genus,lfc_ha_group2)) +
-  geom_col() +
-  coord_flip()
-
-### HA Group 1 vs neg ### 
-# Filter stats to only include taxa that are differentially abundant between H1 group and negative group
-h1neg_taxa_plot = ha1_statistical_table %>% 
-  filter(diff_robust_ha_groupneg==T) %>%
-  left_join(genus_tax, by = "taxon")
-
-# Plot the log 2 fold changes
-
-h1neg_taxa_plot %>%
-  ggplot(aes(Genus,lfc_ha_groupneg)) +
-  geom_col() +
-  coord_flip()
-
-
-### HA Group 2 vs neg ### 
-# Filter stats to only include taxa that are differentially abundant between H2 group and negative group
-h2neg_taxa_plot = ha2_statistical_table %>% 
-  filter(diff_robust_ha_groupneg==T) %>%
-  left_join(genus_tax, by = "taxon")
-
-# Plot the log 2 fold changes
-
-h2neg_taxa_plot %>%
-  ggplot(aes(Genus,lfc_ha_groupneg)) +
-  geom_col() +
-  coord_flip()
-```
-
-Improved Plots
-
-```{r}
 ### HA Group 1 vs Neg ###
 df_h1neg = ha1_statistical_table %>%
   left_join(genus_tax, by = "taxon") 
@@ -198,7 +166,7 @@ fig_h1neg = df_fig_h1neg %>%
     theme_bw() + 
     theme(plot.title = element_text(hjust = 0.5, size = 30),
           panel.grid.minor.y = element_blank(),
-          axis.text.x = element_text(angle = 60, hjust = 1, size = 18),
+          axis.text.x = element_text(angle = 60, hjust = 1, size = 25),
           axis.title.y = element_text(size = 18),
           axis.text.y = element_text(hjust=1, size = 18),
           legend.text = element_text(hjust = 1, size = 12))
@@ -230,7 +198,7 @@ fig_h2neg = df_fig_h2neg %>%
     theme_bw() + 
     theme(plot.title = element_text(hjust = 0.5, size = 30),
           panel.grid.minor.y = element_blank(),
-          axis.text.x = element_text(angle = 60, hjust = 1, size = 18),
+          axis.text.x = element_text(angle = 60, hjust = 1, size = 25),
           axis.title.y = element_text(size = 18),
           axis.text.y = element_text(hjust=1, size = 18),
           legend.text = element_text(hjust = 1, size = 12))
@@ -273,24 +241,38 @@ na2_statistical_table = na2_out$res
 
 ```{r}
 ### NA Group1 vs NA Group2 ### 
-na1_statistical_table$association_ = ifelse(na1_statistical_table$q_na_group2 < 0.05 & na1_statistical_table$lfc_na_group2 > 0, "Enriched", "Not significant")
-na1_statistical_table$association = ifelse(na1_statistical_table$q_na_group2 < 0.05 & na1_statistical_table$lfc_na_group2 < 0, "Depleted",na1_statistical_table$association)
+na1_statistical_table$association_n1n2 = ifelse(na1_statistical_table$q_na_group2 < 0.05 & na1_statistical_table$lfc_na_group2 > 0, "Enriched", "Not significant")
+na1_statistical_table$association_n1n2 = ifelse(na1_statistical_table$q_na_group2 < 0.05 & na1_statistical_table$lfc_na_group2 < 0, "Depleted",na1_statistical_table$association_n1n2)
 
-vplot_n1n2 <- ggplot(na1_statistical_table, aes(x = as.numeric(lfc_na_group2), y = -log10(as.numeric(q_na_group2)), color = association)) +
-  geom_point() +
+vplot_n1n2 <- ggplot(na1_statistical_table, aes(x = as.numeric(lfc_na_group2), y = -log10(as.numeric(q_na_group2)), color = association_n1n2)) +
+  geom_point(size = 5 ) +
+   scale_color_discrete(name = NULL) + 
   labs(x = "Log2 Fold Change", y = "-log10(p-value)",
        title = "Volcano Plot N1 vs N2") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
-  theme_bw()
+  theme_bw() + 
+   scale_color_manual(values = c(
+  "Enriched" = "#F8766D",
+  "Depleted" = "#008EEC",
+  "Not significant" = "grey"
+))+
+   theme(plot.title = element_text(hjust = 0.5, size = 30),
+          panel.grid.minor.y = element_blank(),
+          axis.title.x = element_text(size = 18),
+          axis.text.x = element_text(hjust = 1, size = 18),
+          axis.title.y = element_text(size = 18),
+          axis.text.y = element_text(hjust=1, size = 18),
+          legend.text = element_text(hjust = 1, size = 12))
+
 
 
 vplot_n1n2
 
 ### NA Group1 vs neg ### 
-na1_statistical_table$association_ = ifelse(na1_statistical_table$q_na_groupneg < 0.05 & na1_statistical_table$lfc_na_groupneg > 0, "Enriched", "Not significant")
-na1_statistical_table$association = ifelse(na1_statistical_table$q_na_groupneg < 0.05 & na1_statistical_table$lfc_na_groupneg < 0, "Depleted",na1_statistical_table$association)
+na1_statistical_table$association_n1neg = ifelse(na1_statistical_table$q_na_groupneg < 0.05 & na1_statistical_table$lfc_na_groupneg > 0, "Enriched", "Not significant")
+na1_statistical_table$association_n1neg = ifelse(na1_statistical_table$q_na_groupneg < 0.05 & na1_statistical_table$lfc_na_groupneg < 0, "Depleted",na1_statistical_table$association_n1neg)
 
-vplot_n1neg <- ggplot(na1_statistical_table, aes(x = as.numeric(lfc_na_groupneg), y = -log10(as.numeric(q_na_groupneg)), color = association)) +
+vplot_n1neg <- ggplot(na1_statistical_table, aes(x = as.numeric(lfc_na_groupneg), y = -log10(as.numeric(q_na_groupneg)), color = association_n1neg)) +
   geom_point() +
   labs(x = "Log2 Fold Change", y = "-log10(p-value)",
        title = "Volcano Plot N1 vs neg") +
@@ -301,10 +283,10 @@ vplot_n1neg <- ggplot(na1_statistical_table, aes(x = as.numeric(lfc_na_groupneg)
 vplot_n1neg
 
 ### NA Group2 vs neg ###
-na2_statistical_table$association_ = ifelse(na2_statistical_table$q_na_groupneg < 0.05 & na2_statistical_table$lfc_na_groupneg > 0, "Enriched", "Not significant")
-na2_statistical_table$association = ifelse(na2_statistical_table$q_na_groupneg < 0.05 & na2_statistical_table$lfc_na_groupneg < 0, "Depleted", na2_statistical_table$association)
+na2_statistical_table$association_n2neg = ifelse(na2_statistical_table$q_na_groupneg < 0.05 & na2_statistical_table$lfc_na_groupneg > 0, "Enriched", "Not significant")
+na2_statistical_table$association_n2neg = ifelse(na2_statistical_table$q_na_groupneg < 0.05 & na2_statistical_table$lfc_na_groupneg < 0, "Depleted", na2_statistical_table$association_n2neg)
 
-vplot_h2neg <- ggplot(na2_statistical_table, aes(x = as.numeric(lfc_na_groupneg), y = -log10(as.numeric(q_na_groupneg)), color = association)) +
+vplot_h2neg <- ggplot(na2_statistical_table, aes(x = as.numeric(lfc_na_groupneg), y = -log10(as.numeric(q_na_groupneg)), color = association_n2neg)) +
   geom_point() +
   labs(x = "Log2 Fold Change", y = "-log10(p-value)",
        title = "Volcano Plot N2 vs neg") +
@@ -316,50 +298,6 @@ vplot_h2neg
 ```
 
 ## Log2Fold Change Plots
-
-```{r}
-### NA Group 1 vs NA Group 2 ### 
-# Filter stats to only include taxa that are differentially abundant between N1 group and N2 group
-n1n2_taxa_plot = na1_statistical_table %>% 
-  filter(diff_robust_na_group2==T) %>%
-  left_join(genus_tax, by = "taxon")
-
-# Plot the log 2 fold changes
-
-n1n2_taxa_plot %>%
-  ggplot(aes(Genus,lfc_na_group2)) +
-  geom_col() +
-  coord_flip()
-
-### NA Group 1 vs neg ### 
-# Filter stats to only include taxa that are differentially abundant between N1 group and negative group
-n1neg_taxa_plot = na1_statistical_table %>% 
-  filter(diff_robust_na_groupneg==T) %>%
-  left_join(genus_tax, by = "taxon")
-
-# Plot the log 2 fold changes
-
-n1neg_taxa_plot %>%
-  ggplot(aes(Genus,lfc_na_groupneg)) +
-  geom_col() +
-  coord_flip()
-
-
-### NA Group 2 vs neg ### 
-# Filter stats to only include taxa that are differentially abundant between N2 group and negative group
-n2neg_taxa_plot = na2_statistical_table %>% 
-  filter(diff_robust_na_groupneg==T) %>%
-  left_join(genus_tax, by = "taxon")
-
-# Plot the log 2 fold change #
-
-n2neg_taxa_plot %>%
-  ggplot(aes(x=Genus, y=lfc_na_groupneg)) +
-  geom_col() +
-  coord_flip()
-```
-
-Improved Plots
 
 ```{r}
 ### NA Group 1 vs Neg ###
@@ -387,7 +325,7 @@ fig_n1neg = df_fig_n1neg %>%
     theme_bw() + 
         theme(plot.title = element_text(hjust = 0.5, size = 30),
           panel.grid.minor.y = element_blank(),
-          axis.text.x = element_text(angle = 60, hjust = 1, size = 18),
+          axis.text.x = element_text(angle = 60, hjust = 1, size = 25),
           axis.title.y = element_text(size = 18),
           axis.text.y = element_text(hjust=1, size = 18),
           legend.text = element_text(hjust = 1, size = 12))
@@ -400,7 +338,6 @@ df_n2neg = na2_statistical_table %>%
 df_fig_n2neg = df_n2neg %>%
     filter(diff_robust_na_groupneg == T) %>% 
     mutate(direct = ifelse(lfc_na_groupneg > 0, "Positive LFC", "Negative LFC"),
-                  color = ifelse(passed_ss_na_groupneg == 1, "aquamarine3", "black"),
                   Genus = reorder(Genus, -lfc_na_groupneg))
 
 df_fig_n2neg$direct = factor(df_fig_n2neg$direct, 
@@ -419,16 +356,24 @@ fig_n2neg = df_fig_n2neg %>%
     theme_bw() + 
         theme(plot.title = element_text(hjust = 0.5, size = 30),
           panel.grid.minor.y = element_blank(),
-          axis.text.x = element_text(angle = 60, hjust = 1, size = 18),
+          axis.text.x = element_text(angle = 60, hjust = 1, size = 25),
           axis.title.y = element_text(size = 18),
           axis.text.y = element_text(hjust=1, size = 18),
           legend.text = element_text(hjust = 1, size = 12))
 fig_n2neg
 ```
 
-Saving Graphs Generated
+# Saving Graphs Generated
 
 ```{r}
+### Volcano Plots ###
+# Graphs with no differnetial abundance ie. NA/NA, HA/HA grouping comparisons
+ggsave("../visualizations/figures/differential_abundance_h1vsh2.png", plot = vplot_h1h2, width = 14, height = 10)
+ggsave("../visualizations/figures/differential_abundance_n1vsn2.png", plot = vplot_n1n2, width = 14, height = 10)
+
+
+### Log2FC Plots ###
+# Graphs with differential abundance ie. comparisons with negative group
 ggsave("../visualizations/figures/differential_abundance_h1vsneg.png", plot = fig_h1neg, width = 18, height = 10)
 ggsave("../visualizations/figures/differential_abundance_h2vsneg.png", plot = fig_h2neg, width = 18, height = 10)
 ggsave("../visualizations/figures/differential_abundance_n1vsneg.png", plot = fig_n1neg, width = 18, height = 10)
