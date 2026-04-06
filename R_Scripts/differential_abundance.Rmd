@@ -9,6 +9,7 @@ output: html_document
 
 ```{r}
 library(tidyverse)
+library(stringr)
 library(phyloseq)
 library(ANCOMBC)
 library(microbiome)
@@ -139,7 +140,9 @@ vplot_h2neg
 genus_tax <- data.frame(
   taxon = taxa_names(ps_filt),
   Genus = as.data.frame(tax_table(ps_filt))$Genus
-)
+) %>%
+    mutate(Genus = str_remove(Genus, "g__"))
+
 
 ### HA Group 1 vs Neg ###
 df_h1neg = ha1_statistical_table %>%
@@ -166,7 +169,7 @@ fig_h1neg = df_fig_h1neg %>%
     theme_bw() + 
     theme(plot.title = element_text(hjust = 0.5, size = 30),
           panel.grid.minor.y = element_blank(),
-          axis.text.x = element_text(angle = 60, hjust = 1, size = 25),
+          axis.text.x = element_text(angle = 90, hjust = 1, size = 25),
           axis.title.y = element_text(size = 18),
           axis.text.y = element_text(hjust=1, size = 18),
           legend.text = element_text(hjust = 1, size = 12))
@@ -198,7 +201,7 @@ fig_h2neg = df_fig_h2neg %>%
     theme_bw() + 
     theme(plot.title = element_text(hjust = 0.5, size = 30),
           panel.grid.minor.y = element_blank(),
-          axis.text.x = element_text(angle = 60, hjust = 1, size = 25),
+          axis.text.x = element_text(angle = 90, hjust = 1, size = 25),
           axis.title.y = element_text(size = 18),
           axis.text.y = element_text(hjust=1, size = 18),
           legend.text = element_text(hjust = 1, size = 12))
@@ -308,7 +311,8 @@ df_fig_n1neg = df_n1neg %>%
     filter(diff_robust_na_groupneg == T) %>% 
     mutate(direct = ifelse(lfc_na_groupneg > 0, "Positive LFC", "Negative LFC"),
                   color = ifelse(passed_ss_na_groupneg == 1, "aquamarine3", "black"),
-                  Genus = reorder(Genus, -lfc_na_groupneg))
+                  Genus = reorder(Genus, -lfc_na_groupneg)) 
+
 df_fig_n1neg$direct = factor(df_fig_n1neg$direct, 
                            levels = c("Positive LFC", "Negative LFC"))
   
@@ -325,7 +329,7 @@ fig_n1neg = df_fig_n1neg %>%
     theme_bw() + 
         theme(plot.title = element_text(hjust = 0.5, size = 30),
           panel.grid.minor.y = element_blank(),
-          axis.text.x = element_text(angle = 60, hjust = 1, size = 25),
+          axis.text.x = element_text(angle = 90, hjust = 1, size = 25),
           axis.title.y = element_text(size = 18),
           axis.text.y = element_text(hjust=1, size = 18),
           legend.text = element_text(hjust = 1, size = 12))
@@ -356,9 +360,9 @@ fig_n2neg = df_fig_n2neg %>%
     theme_bw() + 
         theme(plot.title = element_text(hjust = 0.5, size = 30),
           panel.grid.minor.y = element_blank(),
-          axis.text.x = element_text(angle = 60, hjust = 1, size = 25),
+          axis.text.x = element_text(angle = 90, hjust = 1, size = 25),
           axis.title.y = element_text(size = 18),
-          axis.text.y = element_text(hjust=1, size = 18),
+          axis.text.y = element_text(hjust= 1, size = 18),
           legend.text = element_text(hjust = 1, size = 12))
 fig_n2neg
 ```
