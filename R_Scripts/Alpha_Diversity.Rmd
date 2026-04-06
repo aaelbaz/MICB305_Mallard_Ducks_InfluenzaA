@@ -17,6 +17,7 @@ library(picante)
 library(ape)
 library(dunn.test)
 library(ggsignif)
+library(viridis)
 ```
 
 
@@ -196,9 +197,11 @@ p_formatted_HA_group = pdata_HA_group_shannon %>% ggplot(aes(ha_group,value,
   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
   geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
 theme_classic(base_size=16)+
-  ylab("Shannon Diversity") + xlab(NULL) +
-  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12)) +
-  labs(fill= "HA Phylogenetic Groups")
+  ylab("Shannon Diversity") + xlab("HA Phylogenetic Groups") +
+  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12), 
+        legend.position = "none") + 
+  scale_fill_viridis_d(option = "plasma")
+ 
 p_formatted_HA_group
 
 ```
@@ -218,10 +221,14 @@ view(res_sig_group_HA)
 
 P_signif_group_HA <- p_formatted_HA_group + geom_signif(
     comparison = list(c("1", "neg"), c("2","neg")),
-    y_position = c(4.5,4),
-    annotations = c("*","*")
+    y_position = c(4.5,4.25),
+    annotations = c("*","*"),
+    textsize= 6
   )
 P_signif_group_HA
+
+ggsave("Inf_HA_Group_Shannon.png", P_signif_group_HA, width =6, height = 9, dpi = 300)
+
 ```
 NA Phylogenetic Groups
 ```{r}
@@ -237,9 +244,10 @@ p_formatted_NA_group = pdata_NA_group_shannon %>% ggplot(aes(na_group,value,
   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
   geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
 theme_classic(base_size=16)+
-  ylab("Shannon Diversity") + xlab(NULL) +
-  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12)) +
-  labs(fill= "NA Phylogenetic Groups")
+  ylab("Shannon Diversity") + xlab("NA Phylogenetic Groups") +
+  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12), 
+        legend.position = "none") + 
+  scale_fill_viridis_d(option = "plasma")
 p_formatted_NA_group
 
 ```
@@ -254,9 +262,11 @@ view(res_sig_group_NA)
 P_signif_group_NA <- p_formatted_NA_group + geom_signif(
     comparison = list( c("2","neg")),
     y_position = c(4),
-    annotations = c("*")
+    annotations = c("*"),
+    textsize = 6
   )
 P_signif_group_NA
+ggsave("Inf_NA_Group_Shannon.png", P_signif_group_NA, width =6, height = 9, dpi = 300)
 ```
 
 
@@ -351,9 +361,12 @@ faith_formatted_HA_group = faith_metadata %>% ggplot(aes(ha_group,PD,
   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
   geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
 theme_classic(base_size=16)+
-  ylab("Faith's Diversity") + xlab(NULL) +
-  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12)) +
-  labs(fill= "HA Phylogenetic Groups")
+  ylab("Faith's Diversity") + xlab("HA Phylogenetic Groups") +
+  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=20), 
+        legend.position = "none", axis.text.y = element_text(size=20),
+         axis.title.x = element_text(size = 22),  
+  axis.title.y = element_text(size = 22)) + 
+  scale_fill_viridis_d(option = "plasma")
 faith_formatted_HA_group
 ```
 
@@ -368,10 +381,12 @@ view(faith_HA_group_sig)
 ```{r}
 P_faith_group_HA <- faith_formatted_HA_group + geom_signif(
     comparison = list(c("1", "neg"), c("2","neg")),
-    y_position = c(13.5,13),
-    annotations = c("**","*")
+    y_position = c(16,15.25),
+    annotations = c("**","*"),
+    textsize = 10
   )
 P_faith_group_HA
+ggsave("Inf_HA_Group_Faith.png", P_faith_group_HA, width= 6, height =9, dpi=300)
 ```
 
 NA Phylogenetic Group
@@ -381,9 +396,12 @@ faith_formatted_NA_group = faith_metadata %>% ggplot(aes(na_group,PD,
   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
   geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
 theme_classic(base_size=16)+
-  ylab("Faith's Diversity") + xlab(NULL) +
-  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12)) +
-  labs(fill= "NA Phylogenetic Groups")
+  ylab("Faith's Diversity") + xlab("NA Phylogenetic Groups") +
+   theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=20), 
+        legend.position = "none", axis.text.y = element_text(size=20),
+         axis.title.x = element_text(size = 22),  
+  axis.title.y = element_text(size = 22)) + 
+  scale_fill_viridis_d(option = "viridis")
 faith_formatted_NA_group
 ```
 
@@ -397,10 +415,12 @@ faith_NA_group_sig <- dunn.test(faith_NA_group_df$value, faith_NA_group_df$na_gr
 ```{r}
 P_faith_group_NA <- faith_formatted_NA_group + geom_signif(
     comparison = list(c("1", "neg"), c("2","neg")),
-    y_position = c(13.5,13),
-    annotations = c("*","**")
+    y_position = c(16,15.25),
+    annotations = c("*","**"),
+    textsize = 10
   )
 P_faith_group_NA
+ggsave("Inf_NA_Group_Faith.png", P_faith_group_NA, width= 6, height =9, dpi=300)
 ```
 
  
