@@ -56,14 +56,14 @@ head(mds_data)
 # looking at Beta diversity differences between HA group 1, group 2 and negative control
 
 #standardizing all the colors and shapes so they are consistent when comparing graphs. 
-custom_colors_HA<-c("1" = "blue", "2" = "red", "neg" = "purple")
+custom_colors_HA<-c("1" = "#56B4E9", "2" = "#D55E00", "neg" = "#CC79A7")
 custom_shapes_HA <- c("1" = 21, "2" = 24, "neg" = 22)
 
 # looking at Beta diversity differences between HA group 1, group 2 and uninfected
 
 plot_HA_G1_VS_G2_VS_neg<- mds_data %>%
                                   ggplot(aes(MDS1,MDS2,color = ha_group, fill = ha_group, shape = ha_group )) +
-                                  geom_point(size = 2, stroke = 1.4) +
+                                  geom_point(size = 1.5, stroke = 1.4) +
                                   scale_color_manual(values = custom_colors_HA)+
                                   scale_fill_manual(values = custom_colors_HA)+
                                   scale_shape_manual(values = custom_shapes_HA)+
@@ -85,7 +85,7 @@ plot_HA_G1_VS_G2_VS_neg
 plot_HA_G1_VS_G2<- mds_data %>%
                             filter(ha_group != "neg") %>% 
                             ggplot(aes(MDS1,MDS2,color = ha_group, fill = ha_group, shape = ha_group )) +
-                            geom_point(size = 2, stroke = 1.4) +
+                            geom_point(size = 1.5, stroke = 1.4) +
                             scale_color_manual(values = custom_colors_HA)+
                             scale_fill_manual(values = custom_colors_HA)+
                             scale_shape_manual(values = custom_shapes_HA)+
@@ -106,7 +106,7 @@ plot_HA_G1_VS_G2
 plot_HA_G1_VS_NEG<- mds_data %>%
                               filter(ha_group != "2") %>% 
                               ggplot(aes(MDS1,MDS2,color = ha_group, fill = ha_group, shape = ha_group )) +
-                              geom_point(size = 2, stroke = 1.4) +
+                              geom_point(size = 1.5, stroke = 1.4) +
                               scale_color_manual(values = custom_colors_HA)+
                               scale_fill_manual(values = custom_colors_HA)+
                               scale_shape_manual(values = custom_shapes_HA)+
@@ -126,7 +126,7 @@ plot_HA_G1_VS_NEG
 plot_HA_G2_VS_NEG<- mds_data %>%
                               filter(ha_group != "1") %>% 
                               ggplot(aes(MDS1,MDS2,color = ha_group, fill = ha_group, shape = ha_group )) +
-                              geom_point(size = 2, stroke = 1.4) +
+                              geom_point(size = 1.5, stroke = 1.4) +
                               scale_color_manual(values = custom_colors_HA)+
                               scale_fill_manual(values = custom_colors_HA)+
                               scale_shape_manual(values = custom_shapes_HA)+
@@ -232,14 +232,14 @@ Permanova_HA_G2_vs_neg
 # looking at Beta diversity differences between NA group 1, group 2 and negative control
 
 #standardizing all the colors and shapes so they are consistent when comparing graphs. 
-custom_colors_NA<-c("1" = "orange", "2" = "green", "neg" = "purple")
+custom_colors_NA<-c("1" = "#E69F00", "2" = "#009E73", "neg" = "#CC79A7")
 custom_shapes_NA <- c("1" = 21, "2" = 24, "neg" = 22)
 
 # looking at Beta diversity differences between HA group 1, group 2 and uninfected
 
 plot_NA_G1_VS_G2_VS_neg<- mds_data %>%
                                   ggplot(aes(MDS1,MDS2,color = na_group, fill = na_group, shape = na_group )) +
-                                  geom_point(size = 2, stroke = 1.4) +
+                                  geom_point(size = 1.5, stroke = 1.4) +
                                   scale_color_manual(values = custom_colors_NA)+
                                   scale_fill_manual(values = custom_colors_NA)+
                                   scale_shape_manual(values = custom_shapes_NA)+
@@ -261,7 +261,7 @@ plot_NA_G1_VS_G2_VS_neg
 plot_NA_G1_VS_G2<- mds_data %>%
                             filter(na_group != "neg") %>% 
                             ggplot(aes(MDS1,MDS2,color = na_group, fill = na_group, shape = na_group )) +
-                            geom_point(size = 2, stroke = 1.4) +
+                            geom_point(size = 1.5, stroke = 1.4) +
                             scale_color_manual(values = custom_colors_NA)+
                             scale_fill_manual(values = custom_colors_NA)+
                             scale_shape_manual(values = custom_shapes_NA)+
@@ -282,7 +282,7 @@ plot_NA_G1_VS_G2
 plot_NA_G1_VS_NEG<- mds_data %>%
                               filter(na_group != "2") %>% 
                               ggplot(aes(MDS1,MDS2,color = na_group, fill = na_group, shape = na_group )) +
-                              geom_point(size = 2, stroke = 1.4) +
+                              geom_point(size = 1.5, stroke = 1.4) +
                               scale_color_manual(values = custom_colors_NA)+
                               scale_fill_manual(values = custom_colors_NA)+
                               scale_shape_manual(values = custom_shapes_NA)+
@@ -302,7 +302,7 @@ plot_NA_G1_VS_NEG
 plot_NA_G2_VS_NEG<- mds_data %>%
                               filter(na_group != "1") %>% 
                               ggplot(aes(MDS1,MDS2,color = na_group, fill = na_group, shape = na_group )) +
-                              geom_point(size = 2, stroke = 1.4) +
+                              geom_point(size = 1.5, stroke = 1.4) +
                               scale_color_manual(values = custom_colors_NA)+
                               scale_fill_manual(values = custom_colors_NA)+
                               scale_shape_manual(values = custom_shapes_NA)+
@@ -413,41 +413,41 @@ Permanova_NA_G2_vs_neg
 #HA data
 ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- Beta Diversity HA G1 vs G2 vs NEG.jpeg',
        plot = plot_HA_G1_VS_G2_VS_neg,
-       height= 4, width = 6)
+       height= 4, width = 6.5)
 
 ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- Beta Diversity HA G1 vs G2.jpeg',
        plot = plot_HA_G1_VS_G2,
-       height= 4, width = 6)
+       height= 4, width = 6.5)
 
 
 ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- HA G1 vs NEG.jpeg',
        plot = plot_HA_G1_VS_NEG,
-       height= 4, width = 6)
+       height= 4, width = 6.5)
 
 
 ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- HA G2 vs NEG.jpeg',
        plot = plot_HA_G2_VS_NEG,
-       height= 4, width = 6)
+       height= 4, width = 6.5)
 
 
 #NA data
 ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- Beta Diversity NA G1 vs G2 vs NEG.jpeg',
        plot = plot_NA_G1_VS_G2_VS_neg,
-       height= 4, width = 6)
+       height= 4, width = 6.5)
 
 ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- Beta Diversity NA G1 vs G2.jpeg',
        plot = plot_NA_G1_VS_G2,
-       height= 4, width = 6)
+       height= 4, width = 6.5)
 
 
 ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- NA G1 vs NEG.jpeg',
        plot = plot_NA_G1_VS_NEG,
-       height= 4, width = 6)
+       height= 4, width = 6.5)
 
 
 ggsave('../visualizations/figures/beta diversity/Beta_Diversity_Graphs- NA G2 vs NEG.jpeg',
        plot = plot_NA_G2_VS_NEG,
-       height= 4, width = 6)
+       height= 4, width = 6.5)
 
 
 
