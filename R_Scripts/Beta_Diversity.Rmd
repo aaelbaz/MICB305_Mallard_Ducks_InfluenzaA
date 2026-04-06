@@ -56,7 +56,7 @@ head(mds_data)
 # looking at Beta diversity differences between HA group 1, group 2 and negative control
 
 #standardizing all the colors and shapes so they are consistent when comparing graphs. 
-custom_colors_HA<-c("1" = "#56B4E9", "2" = "#D55E00", "neg" = "#CC79A7")
+custom_colors_HA<-c("1" = "#56B4E9", "2" = "#D55E00", "neg" = "#009E73")
 custom_shapes_HA <- c("1" = 21, "2" = 24, "neg" = 22)
 
 # looking at Beta diversity differences between HA group 1, group 2 and uninfected
@@ -232,7 +232,7 @@ Permanova_HA_G2_vs_neg
 # looking at Beta diversity differences between NA group 1, group 2 and negative control
 
 #standardizing all the colors and shapes so they are consistent when comparing graphs. 
-custom_colors_NA<-c("1" = "#E69F00", "2" = "#009E73", "neg" = "#CC79A7")
+custom_colors_NA<-c("1" = "darkgrey", "2" = "#CC79A7", "neg" = "#009E73")
 custom_shapes_NA <- c("1" = 21, "2" = 24, "neg" = 22)
 
 # looking at Beta diversity differences between HA group 1, group 2 and uninfected
