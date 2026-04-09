@@ -9,7 +9,7 @@ output: html_document
 
 ### Load libraries and Data, I rarefied the data based on the conclusions we came to when looking at the QUIME results.The rarefaction number is 5396
 
-```{r Load data and libraries}
+```{r Load data, libraries, and subcatagoriuze phylosq tables}
 library(tidyverse)
 library(phyloseq)
 library(vegan)
@@ -23,29 +23,169 @@ psrare <- ps|>
 table(sample_sums(psrare))
 
 
+#subcatagorise phyloseeq phylogenetic gorups
+
+# HA groups
+ps_ha_g1_g2 = psrare
+
+ps_ha_g1_g2@sam_data <- data.frame(ps_ha_g1_g2@sam_data) %>% 
+  filter(ps_ha_g1_g2@sam_data$ha_group != "neg") %>%
+  sample_data(.)
+all.equal(data.frame(ps_ha_g1_g2@sam_data), data.frame(psrare@sam_data))
+
+
+ps_ha_g1_neg = psrare
+
+ps_ha_g1_neg@sam_data <- data.frame(ps_ha_g1_neg@sam_data) %>% 
+  filter(ps_ha_g1_neg@sam_data$ha_group != "2") %>%
+  sample_data(.)
+all.equal(data.frame(ps_ha_g1_neg@sam_data), data.frame(psrare@sam_data))
+
+
+ps_ha_g2_neg = psrare
+
+ps_ha_g2_neg@sam_data <- data.frame(ps_ha_g2_neg@sam_data) %>% 
+  filter(ps_ha_g2_neg@sam_data$ha_group != "1") %>%
+  sample_data(.)
+all.equal(data.frame(ps_ha_g2_neg@sam_data), data.frame(psrare@sam_data))
+
+# NAgroups 
+
+ps_na_g1_g2 = psrare
+
+ps_na_g1_g2@sam_data <- data.frame(ps_na_g1_g2@sam_data) %>% 
+  filter(ps_na_g1_g2@sam_data$na_group != "neg") %>%
+  sample_data(.)
+all.equal(data.frame(ps_na_g1_g2@sam_data), data.frame(psrare@sam_data))
+
+
+ps_na_g1_neg = psrare
+
+ps_na_g1_neg@sam_data <- data.frame(ps_na_g1_neg@sam_data) %>% 
+  filter(ps_na_g1_neg@sam_data$na_group != "2") %>%
+  sample_data(.)
+all.equal(data.frame(ps_na_g1_neg@sam_data), data.frame(psrare@sam_data))
+
+
+ps_na_g2_neg = psrare
+
+ps_na_g2_neg@sam_data <- data.frame(ps_na_g2_neg@sam_data) %>% 
+  filter(ps_na_g2_neg@sam_data$na_group != "1") %>%
+  sample_data(.)
+all.equal(data.frame(ps_na_g2_neg@sam_data), data.frame(psrare@sam_data))
+
+
+
 ```
 
 #Step 2) 
-### Caclculate the beta diversity using the Bray-Curtis distance matrix.
+### Caclculate the beta diversity using the wighted unifract distance matrix.
 
-```{r calculate bray-curtis distances}
-# Calculate the distance between each sample pair
-ps_WUF <- phyloseq::distance(psrare, method = "wunifrac")
-View(as.matrix(ps_WUF)) # Every pairwise comparison included
+```{r calculate wighted unifrac distances}
+# Calculate the distance between each sample pair HA and NA phylogeny groups
+ps_all_groups_WUF <- phyloseq::distance(psrare, method = "wunifrac")
+
+# HA Group 1 Vs Group 2 weighted unifract distances. 
+ps_ha_g1_g2_WUF <- phyloseq::distance(ps_ha_g1_g2, method = "wunifrac")
+
+# HA Group 1 Vs neg weighted unifract distances. 
+
+ps_ha_g1_neg_WUF <- phyloseq::distance(ps_ha_g1_neg, method = "wunifrac")
+
+# HA Group 2 Vs neg weighted unifract distances. 
+
+ps_ha_g2_neg_WUF <- phyloseq::distance(ps_ha_g2_neg, method = "wunifrac")
+
+# NA Group 1 Vs Group 2 weighted unifract distances. 
+
+ps_na_g1_g2_WUF <- phyloseq::distance(ps_na_g1_g2, method = "wunifrac")
+
+# NA Group 1 Vs neg weighted unifract distances. 
+
+ps_na_g1_neg_WUF <- phyloseq::distance(ps_na_g1_neg, method = "wunifrac")
+
+# NA Group 2 Vs neg weighted unifract distances. 
+
+ps_na_g2_neg_WUF <- phyloseq::distance(ps_na_g2_neg, method = "wunifrac")
+
+
+
 ```
 
 #Step 3) 
 ### use Multidimensional scaling to reduce the distance matrix into fewer dimentions which will help plot abd understand the Data.
 
 ```{r normalize and plot}
-# MDS scaling
-set.seed(421)
-mds = metaMDS(ps_WUF)
+# set a seed
 
-# Extract data
-mds_data = mds$points %>% as.data.frame %>%
+set.seed(421)
+
+# MDS scaling for HA and NA all groups 
+
+mds_all_groups = metaMDS(ps_all_groups_WUF)
+
+# MDS scaling for HA G1 Vs G2
+
+mds_ha_g1_g2 = metaMDS(ps_ha_g1_g2_WUF)
+
+# MDS scaling for HA G1 Vs neg
+
+mds_ha_g1_neg = metaMDS(ps_ha_g1_neg_WUF)
+
+# MDS scaling for HA G2 Vs neg
+
+mds_ha_g2_neg = metaMDS(ps_ha_g2_neg_WUF)
+
+# MDS scaling for NA G1 Vs G2
+
+mds_na_g1_g2 = metaMDS(ps_na_g1_g2_WUF)
+
+# MDS scaling for NA G1 Vs neg
+
+mds_na_g1_neg = metaMDS(ps_na_g1_neg_WUF)
+
+# MDS scaling for NA G2 Vs neg
+
+mds_na_g2_neg = metaMDS(ps_na_g2_neg_WUF)
+
+
+# Extract data for all groups
+
+# MDS scaling for HA and NA all groups 
+
+mds_all_groups_data = mds_all_groups$points %>% as.data.frame %>%
   merge(sample_data(psrare), by='row.names', sort=F)
-head(mds_data)
+# MDS scaling for HA G1 Vs G2
+
+mds_ha_g1_g2_data = mds_ha_g1_g2$points %>% as.data.frame %>%
+  merge(sample_data(ps_ha_g1_g2), by='row.names', sort=F)
+
+# MDS scaling for HA G1 Vs neg
+
+mds_ha_g1_neg_data = mds_ha_g1_neg$points %>% as.data.frame %>%
+  merge(sample_data(ps_ha_g1_neg), by='row.names', sort=F)
+
+# MDS scaling for HA G2 Vs neg
+
+mds_ha_g2_neg_data = mds_ha_g2_neg$points %>% as.data.frame %>%
+  merge(sample_data(ps_ha_g2_neg), by='row.names', sort=F)
+
+# MDS scaling for NA G1 Vs G2
+
+mds_na_g1_g2_data = mds_na_g1_g2$points %>% as.data.frame %>%
+  merge(sample_data(ps_na_g1_g2), by='row.names', sort=F)
+
+# MDS scaling for NA G1 Vs neg
+
+mds_na_g1_neg_data = mds_na_g1_neg$points %>% as.data.frame %>%
+  merge(sample_data(ps_na_g1_neg), by='row.names', sort=F)
+
+# MDS scaling for NA G2 Vs neg
+
+mds_na_g2_neg_data = mds_na_g2_neg$points %>% as.data.frame %>%
+  merge(sample_data(ps_na_g2_neg), by='row.names', sort=F)
+
+
 ```
 
 #Step 4) 
@@ -61,7 +201,7 @@ custom_shapes_HA <- c("1" = 21, "2" = 24, "neg" = 22)
 
 # looking at Beta diversity differences between HA group 1, group 2 and uninfected
 
-plot_HA_G1_VS_G2_VS_neg<- mds_data %>%
+plot_HA_G1_VS_G2_VS_neg<- mds_all_groups_data %>%
                                   ggplot(aes(MDS1,MDS2,color = ha_group, fill = ha_group, shape = ha_group )) +
                                   geom_point(size = 1.5, stroke = 1.4) +
                                   scale_color_manual(values = custom_colors_HA)+
@@ -82,8 +222,7 @@ plot_HA_G1_VS_G2_VS_neg
 
 
 # looking at Beta diversity differences between HA group 1 and group 2
-plot_HA_G1_VS_G2<- mds_data %>%
-                            filter(ha_group != "neg") %>% 
+plot_HA_G1_VS_G2<- mds_ha_g1_g2_data %>%
                             ggplot(aes(MDS1,MDS2,color = ha_group, fill = ha_group, shape = ha_group )) +
                             geom_point(size = 1.5, stroke = 1.4) +
                             scale_color_manual(values = custom_colors_HA)+
@@ -103,8 +242,7 @@ plot_HA_G1_VS_G2<- mds_data %>%
 plot_HA_G1_VS_G2
 
 # looking at Beta diversity differences between HA group 1 and uninfected
-plot_HA_G1_VS_NEG<- mds_data %>%
-                              filter(ha_group != "2") %>% 
+plot_HA_G1_VS_NEG<- mds_ha_g1_neg_data %>%
                               ggplot(aes(MDS1,MDS2,color = ha_group, fill = ha_group, shape = ha_group )) +
                               geom_point(size = 1.5, stroke = 1.4) +
                               scale_color_manual(values = custom_colors_HA)+
@@ -123,8 +261,7 @@ plot_HA_G1_VS_NEG<- mds_data %>%
 
 plot_HA_G1_VS_NEG
 # looking at Beta diversity differences between HA group 2 and uninfected
-plot_HA_G2_VS_NEG<- mds_data %>%
-                              filter(ha_group != "1") %>% 
+plot_HA_G2_VS_NEG<- mds_ha_g2_neg_data %>%
                               ggplot(aes(MDS1,MDS2,color = ha_group, fill = ha_group, shape = ha_group )) +
                               geom_point(size = 1.5, stroke = 1.4) +
                               scale_color_manual(values = custom_colors_HA)+
@@ -148,13 +285,20 @@ plot_HA_G2_VS_NEG
 ### Perform a PERMANOVA test to find statistical significance between the HA groups using an Adonis function.
 
 ```{r}
-metadata <- sample_data(psrare) %>% data.frame() # to make the next lines easier
+#make meta data for all comparisons 
+metadata_all_groups <- sample_data(psrare) %>% data.frame() # all groups 
+
+metadata_ha_g1_g2 <- sample_data(ps_ha_g1_g2) %>% data.frame() # HA G1 vs G2
+
+metadata_ha_g1_neg <- sample_data(ps_ha_g1_neg) %>% data.frame() # HA G1 vs Neg
+
+metadata_ha_g2_neg <- sample_data(ps_ha_g2_neg) %>% data.frame() # HA G2 vs Neg
 
 
 set.seed(421)
 # Single variable anova 
 
-Permanova_on_HA_groups <- adonis2(ps_WUF ~ ha_group, data = metadata, permutations = 99999)
+Permanova_on_HA_groups <- adonis2(ps_all_groups_WUF ~ ha_group, data = metadata_all_groups, permutations = 99999)
 
 Permanova_on_HA_groups
 
@@ -168,14 +312,14 @@ Permanova_on_HA_groups
 compare_G1_vs_G2_HA <- c('2','1')
 
 # Correct the data to make them have the same size when comparing G1 Vs G2
-keep_G1_vs_G2_HA <- metadata %>% filter(ha_group %in% compare_G1_vs_G2_HA) %>% rownames()
+keep_G1_vs_G2_HA <- metadata_ha_g1_g2 %>% filter(ha_group %in% compare_G1_vs_G2_HA) %>% rownames()
 
 
-ps_WUF_G1_vs_G2_HA <- as.matrix(ps_WUF)[keep_G1_vs_G2_HA,keep_G1_vs_G2_HA] %>% as.dist()
+ps_WUF_G1_vs_G2_HA <- as.matrix(ps_ha_g1_g2_WUF)[keep_G1_vs_G2_HA,keep_G1_vs_G2_HA] %>% as.dist()
 
 # Run a PERMANOVA on G1 vs G2
 Permanova_HA_G1_vs_G2 <- adonis2(ps_WUF_G1_vs_G2_HA ~ ha_group,
-                       data <- metadata %>% filter(ha_group %in% compare_G1_vs_G2_HA),permutations = 99999)
+                       data <- metadata_ha_g1_g2 %>% filter(ha_group %in% compare_G1_vs_G2_HA),permutations = 99999)
 
 Permanova_HA_G1_vs_G2 
 
@@ -185,14 +329,14 @@ Permanova_HA_G1_vs_G2
 compare_G1_vs_neg_HA <- c('neg','1')
 
 # Correct the data to make them have the same size when comparing G1 Vs neg
-keep_G1_vs_neg_HA <- metadata %>% filter(ha_group %in% compare_G1_vs_neg_HA) %>% rownames()
+keep_G1_vs_neg_HA <- metadata_ha_g1_neg %>% filter(ha_group %in% compare_G1_vs_neg_HA) %>% rownames()
 
 
-ps_WUF_G1_vs_neg_HA <- as.matrix(ps_WUF)[keep_G1_vs_neg_HA,keep_G1_vs_neg_HA] %>% as.dist()
+ps_WUF_G1_vs_neg_HA <- as.matrix(ps_ha_g1_neg_WUF)[keep_G1_vs_neg_HA,keep_G1_vs_neg_HA] %>% as.dist()
 
 # Run a PERMANOVA on G1 vs neg
 Permanova_HA_G1_vs_neg <- adonis2(ps_WUF_G1_vs_neg_HA ~ ha_group,
-                       data = metadata %>% filter(ha_group %in% compare_G1_vs_neg_HA), permutations = 99999)
+                       data = metadata_ha_g1_neg %>% filter(ha_group %in% compare_G1_vs_neg_HA), permutations = 99999)
 
 Permanova_HA_G1_vs_neg 
 
@@ -204,18 +348,18 @@ Permanova_HA_G1_vs_neg
 compare_G2_vs_neg_HA <- c('neg','2')
 
 # Correct the data to make them have the same size when comparing G2 Vs neg
-keep_G2_vs_neg_HA <- metadata %>% filter(ha_group %in% compare_G2_vs_neg_HA) %>% rownames()
+keep_G2_vs_neg_HA <- metadata_ha_g2_neg %>% filter(ha_group %in% compare_G2_vs_neg_HA) %>% rownames()
 
 
-ps_WUF_G2_vs_neg_HA <- as.matrix(ps_WUF)[keep_G2_vs_neg_HA,keep_G2_vs_neg_HA] %>% as.dist()
+ps_WUF_G2_vs_neg_HA <- as.matrix(ps_ha_g2_neg_WUF)[keep_G2_vs_neg_HA,keep_G2_vs_neg_HA] %>% as.dist()
 
 # Run a PERMANOVA on G2 vs neg
 Permanova_HA_G2_vs_neg <- adonis2(ps_WUF_G2_vs_neg_HA ~ ha_group,
-                       data = metadata %>% filter(ha_group %in% compare_G2_vs_neg_HA), permutations = 99999)
+                       data = metadata_ha_g2_neg %>% filter(ha_group %in% compare_G2_vs_neg_HA), permutations = 99999)
 
 Permanova_HA_G2_vs_neg 
 
-# This one showed  significance p= 0.0142 indication a statisticaly significant differences between the beta diversity of G2 vs neg. This indicates that group 2 HA influenza viruses may have a stronger affect in changing the beta diversity of the coacle microbiome. 
+# This one showed  significance p= 0.01333 indication a statisticaly significant differences between the beta diversity of G2 vs neg. This indicates that group 2 HA influenza viruses may have a stronger affect in changing the beta diversity of the coacle microbiome. 
 
 
 ```
@@ -237,7 +381,7 @@ custom_shapes_NA <- c("1" = 21, "2" = 24, "neg" = 22)
 
 # looking at Beta diversity differences between HA group 1, group 2 and uninfected
 
-plot_NA_G1_VS_G2_VS_neg<- mds_data %>%
+plot_NA_G1_VS_G2_VS_neg<- mds_all_groups_data %>%
                                   ggplot(aes(MDS1,MDS2,color = na_group, fill = na_group, shape = na_group )) +
                                   geom_point(size = 1.5, stroke = 1.4) +
                                   scale_color_manual(values = custom_colors_NA)+
@@ -258,8 +402,7 @@ plot_NA_G1_VS_G2_VS_neg
 
 
 # looking at Beta diversity differences between HA group 1 and group 2
-plot_NA_G1_VS_G2<- mds_data %>%
-                            filter(na_group != "neg") %>% 
+plot_NA_G1_VS_G2<- mds_na_g1_g2_data %>%
                             ggplot(aes(MDS1,MDS2,color = na_group, fill = na_group, shape = na_group )) +
                             geom_point(size = 1.5, stroke = 1.4) +
                             scale_color_manual(values = custom_colors_NA)+
@@ -279,8 +422,7 @@ plot_NA_G1_VS_G2<- mds_data %>%
 plot_NA_G1_VS_G2
 
 # looking at Beta diversity differences between HA group 1 and uninfected
-plot_NA_G1_VS_NEG<- mds_data %>%
-                              filter(na_group != "2") %>% 
+plot_NA_G1_VS_NEG<- mds_na_g1_neg_data %>%
                               ggplot(aes(MDS1,MDS2,color = na_group, fill = na_group, shape = na_group )) +
                               geom_point(size = 1.5, stroke = 1.4) +
                               scale_color_manual(values = custom_colors_NA)+
@@ -299,8 +441,7 @@ plot_NA_G1_VS_NEG<- mds_data %>%
 
 plot_NA_G1_VS_NEG
 # looking at Beta diversity differences between HA group 2 and uninfected
-plot_NA_G2_VS_NEG<- mds_data %>%
-                              filter(na_group != "1") %>% 
+plot_NA_G2_VS_NEG<- mds_na_g2_neg_data %>%
                               ggplot(aes(MDS1,MDS2,color = na_group, fill = na_group, shape = na_group )) +
                               geom_point(size = 1.5, stroke = 1.4) +
                               scale_color_manual(values = custom_colors_NA)+
@@ -325,13 +466,19 @@ plot_NA_G2_VS_NEG
 ##stats for NA group
 ```{r}
 
-metadata <- sample_data(psrare) %>% data.frame() # to make the next lines easier
+#make meta data for all comparisons 
+metadata_all_groups <- sample_data(psrare) %>% data.frame() # all groups 
 
+metadata_na_g1_g2 <- sample_data(ps_na_g1_g2) %>% data.frame() # HA G1 vs G2
+
+metadata_na_g1_neg <- sample_data(ps_na_g1_neg) %>% data.frame() # HA G1 vs Neg
+
+metadata_na_g2_neg <- sample_data(ps_na_g2_neg) %>% data.frame() # HA G2 vs Neg
 
 set.seed(421)
 # Single variable anova 
 
-Permanova_on_NA_groups <- adonis2(ps_WUF ~ na_group, data = metadata, permutation = 99999)
+Permanova_on_NA_groups <- adonis2(ps_all_groups_WUF ~ na_group, data = metadata_all_groups, permutation = 99999)
 
 Permanova_on_NA_groups
 
@@ -345,14 +492,14 @@ Permanova_on_NA_groups
 compare_G1_vs_G2_NA <- c('2','1')
 
 # Correct the data to make them have the same size when comparing G1 Vs G2
-keep_G1_vs_G2_NA <- metadata %>% filter(na_group %in% compare_G1_vs_G2_NA) %>% rownames()
+keep_G1_vs_G2_NA <- metadata_na_g1_g2 %>% filter(na_group %in% compare_G1_vs_G2_NA) %>% rownames()
 
 
-ps_WUF_G1_vs_G2_NA <- as.matrix(ps_WUF)[keep_G1_vs_G2_NA,keep_G1_vs_G2_NA] %>% as.dist()
+ps_WUF_G1_vs_G2_NA <- as.matrix(ps_na_g1_g2_WUF)[keep_G1_vs_G2_NA,keep_G1_vs_G2_NA] %>% as.dist()
 
 # Run a PERMANOVA on G1 vs G2
 Permanova_NA_G1_vs_G2 <- adonis2(ps_WUF_G1_vs_G2_NA ~ na_group,
-                       data = metadata %>% filter(na_group %in% compare_G1_vs_G2_NA), permutation = 99999)
+                       data = metadata_na_g1_g2 %>% filter(na_group %in% compare_G1_vs_G2_NA), permutation = 99999)
 
 Permanova_NA_G1_vs_G2 
 
@@ -362,37 +509,37 @@ Permanova_NA_G1_vs_G2
 compare_G1_vs_neg_NA <- c('neg','1')
 
 # Correct the data to make them have the same size when comparing G1 Vs neg
-keep_G1_vs_neg_NA <- metadata %>% filter(ha_group %in% compare_G1_vs_neg_NA) %>% rownames()
+keep_G1_vs_neg_NA <- metadata_na_g1_neg %>% filter(ha_group %in% compare_G1_vs_neg_NA) %>% rownames()
 
 
-ps_WUF_G1_vs_neg_NA <- as.matrix(ps_WUF)[keep_G1_vs_neg_NA,keep_G1_vs_neg_NA] %>% as.dist()
+ps_WUF_G1_vs_neg_NA <- as.matrix(ps_na_g1_neg_WUF)[keep_G1_vs_neg_NA,keep_G1_vs_neg_NA] %>% as.dist()
 
 # Run a PERMANOVA on G1 vs neg
 Permanova_NA_G1_vs_neg <- adonis2(ps_WUF_G1_vs_neg_NA ~ na_group,
-                       data = metadata %>% filter(ha_group %in% compare_G1_vs_neg_NA), permutations = 99999)
+                       data = metadata_na_g1_neg %>% filter(ha_group %in% compare_G1_vs_neg_NA), permutations = 99999)
 
 Permanova_NA_G1_vs_neg 
 
 
-# This one showed no significance p= 0.1906 indcation no differences between the beta diversity of G1 vs neg
+# This one showed no significance p= 0.3379 indcation no differences between the beta diversity of G1 vs neg
 
 
 # Comparing HA G2 Vs Neg using PERMANOVA 
 compare_G2_vs_neg_NA <- c('neg','2')
 
 # Correct the data to make them have the same size when comparing G2 Vs neg
-keep_G2_vs_neg_NA <- metadata %>% filter(ha_group %in% compare_G2_vs_neg_NA) %>% rownames()
+keep_G2_vs_neg_NA <- metadata_na_g2_neg %>% filter(ha_group %in% compare_G2_vs_neg_NA) %>% rownames()
 
 
-ps_WUF_G2_vs_neg_NA <- as.matrix(ps_WUF)[keep_G2_vs_neg_NA,keep_G2_vs_neg_NA] %>% as.dist()
+ps_WUF_G2_vs_neg_NA <- as.matrix(ps_na_g2_neg_WUF)[keep_G2_vs_neg_NA,keep_G2_vs_neg_NA] %>% as.dist()
 
 # Run a PERMANOVA on G2 vs neg
 Permanova_NA_G2_vs_neg <- adonis2(ps_WUF_G2_vs_neg_NA ~ na_group,
-                       data = metadata %>% filter(ha_group %in% compare_G2_vs_neg_NA), permutations = 99999)
+                       data = metadata_na_g2_neg %>% filter(ha_group %in% compare_G2_vs_neg_NA), permutations = 99999)
 
 Permanova_NA_G2_vs_neg 
 
-# This one showed significance p= 0.03712 indcation a statisticaly significant differences between the beta diversity of G2 vs neg. This indicates that group 2 HA influenza viruses may have a stronger affect in changing the beta diversity of the coacle microbiome. 
+# This one showed significance p= 0.04059 indcation a statisticaly significant differences between the beta diversity of G2 vs neg. This indicates that group 2 HA influenza viruses may have a stronger affect in changing the beta diversity of the coacle microbiome. 
 
 
 
@@ -406,7 +553,7 @@ Permanova_NA_G2_vs_neg
 ##save data
 
 ```{r}
-# saving the data 
+# saving the data
 
 #  Save plot
 
