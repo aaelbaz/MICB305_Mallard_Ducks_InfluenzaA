@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
+library(mixOmics)
 library(dplyr)
 library(phyloseq)
 library(vegan)
@@ -28,11 +29,12 @@ library(ranger)
 library(pROC)
 library(boot)
 library(MLmetrics)
+library(VSURF)
 ```
 
 ## Loading Datafiles
 
-To run our randomforest model we will use the same phyloseq object during earlier coding work. We will attempt to generate a randomforest predictive model using specific genera and their abundances based on previous results, including ...... . The MICB 305 reference script by Avril Metcalfe-Roach will be used to run a randomforest model.
+To run our randomforest model we will use the same phyloseq object during earlier coding work. We will attempt to generate a randomforest predictive model using VSURF predicted taxa of importance. The MICB 305 reference script by Avril Metcalfe-Roach will be used to run a randomforest model. All HA related scripts that would interfere with NA related scripts have been commented out. Any person who wishes to run our analyses on HA data should comment out NA related scripts while uncommenting HA related scripts.
 
 ```{r}
 ps = readRDS('../processed_data/phyloseq_taxonomy.rds')|>
@@ -40,98 +42,163 @@ ps = readRDS('../processed_data/phyloseq_taxonomy.rds')|>
 
 ```
 
+## Identifying genera of interest for our randomforest model using VSURF package
+
+```{r}
+
+select <- dplyr::select
+
+set.seed(420)
+
+ps_clr = ps |>
+  microbiome::transform("clr")|>
+  filter_taxa(function(x) mean(x) >= 0.0001, TRUE)
+
+vsurf_df <- psmelt(ps_clr)
+
+vsurf_df_transformed <- vsurf_df |>
+  group_by("Genus")|>
+  mutate(Abundance = scale(Abundance))|>
+  mutate(Abundance = Abundance[, 1])|>
+  ungroup()
+
+vsurf_df_transformed <- vsurf_df_transformed |>
+    filter(Genus != " g__uncultured")
+
+# vsurf_df_pivot_ha <- vsurf_df_transformed |>
+#   select(Sample, ha_group, Genus, Abundance) |>
+#   pivot_wider(names_from = Genus, values_from = Abundance)|>
+#   filter(ha_group != "neg")|>
+#   select(-Sample)
+
+vsurf_df_pivot_na = vsurf_df_transformed |>
+  select(Sample, na_group, Genus, Abundance) |>
+  pivot_wider(names_from = Genus, values_from = Abundance)|>
+  filter(na_group != "neg")|>
+  select(-Sample)
+
+#### NA VSURF
+
+nay = as.factor(vsurf_df_pivot_na$na_group)
+
+nax <- vsurf_df_pivot_na|>
+  select(-na_group)
+
+set.seed(421)
+
+vna_result <- VSURF(nax, nay, ntree = 2000)
+
+set.seed(422)
+
+vna_result2 <- VSURF(nax, nay, ntree = 2000)
+
+set.seed(423)
+
+vna_result3 <- VSURF(nax, nay, ntree = 2000)
+
+## We seem to have a relatively unstable set of genera here for our randomforest model.
+## However, we used the data from the first vna_result. A nested cv would be ideal to perform here. 
+
+#### HA VSURF
+
+# hay = as.factor(vsurf_df_pivot_ha$ha_group)
+# 
+# hax <- vsurf_df_pivot_ha|>
+#   select(-ha_group)
+# 
+# set.seed(421)
+# 
+# vha_result <- VSURF(hax, hay, ntree = 2000)
+# 
+# set.seed(422)
+# 
+# vha_result <- VSURF(hax, hay, ntree = 2000)
+# 
+# set.seed(423)
+# 
+# vha_result <- VSURF(hax, hay, ntree = 2000)
+
+## As such, we then get our NA/HA VSURF model. As we are interested in biological significance, we will use varselect.interp as our genera of importance to then go on to create a randomforest model for NA groups. Here, we set seed and rerun the vsurf to see if the same results consistently comes up - in the case of HA, we have 6,62, and 18 that consistently come up. 
+
+
+```
+
+
 ## Prepping our phyloseq object based on our identified genera of interest for HA:
 
 ```{r}
 
-genera_of_interest <- c("dae4414c2d518a1a68ff10aeafb328fa", "ed2e115df9ed4a9cf8de15df330c428e",
-                        "ac8a688dc06b4c9063048eea02c5d39f", "15efbfe72b43001ac4b74fa6a89cce83",
-                        "2486ee9e808d35d25d6d5ebb4d3fdbba", "cda4e6f933bb3108ea3e92f9db411c00",
-                        "24a60c6448e70d9198ad6ba93520958c", "e27680d4009f98f30248d823bc17fb8e",
-                        "667fb5965fa7ccf7265f991dba0b5c5e", "fda8f480a378db2134a55c9dfb9b6b10",
-                        "02bab2db0a7782cf48dec72cbac4bb20", "606cf1583385e5a58a195ff31b36a6d8")
-
-ps_clr = ps |>
-  microbiome::transform("clr")
-
-ps_filt = prune_taxa(genera_of_interest, ps_clr)
-
-df <- psmelt(ps_filt)
-
-df_transformed <- df |>
-  group_by("Genus") |>
-  mutate(Abundance = scale(Abundance))|>
-  ungroup()
-
-df_pivot = df_transformed |>
-  select(Sample, ha_group, Genus, Abundance) |>
-  pivot_wider(names_from = Genus, values_from = Abundance)
-
-## We will also filter for only group 1 and group 2, as we are interested in seeing if we can predict group 1 vs group 2 rather than group 1 vs control or group 2 vs control.
-
-df_noNA <- df_pivot |>
-  na.omit()|>
-  filter(ha_group != "neg")|>
-  mutate(ha_group = case_when(ha_group == 1 ~ "one", ha_group == 2 ~ "two"))|>
-  mutate(ha_group = as.factor(ha_group))
-
-df_final <- df_noNA|>
-  select(-Sample)
-
+# ha_selected_vars <- vha_result$varselect.interp
+# 
+# genera_of_interest_for_ha <- hax[, ha_selected_vars]
+# 
+# ha_selected <- as.list(colnames(genera_of_interest_for_ha))
+# ha_selected <- unlist(ha_selected)
+# 
+# ha_prepped_rf_df <- vsurf_df_pivot_ha |>
+#   select(ha_group, all_of(ha_selected))|>
+#   na.omit()|>
+#   filter(ha_group != "neg")|>
+#   mutate(ha_group = case_when(ha_group == 1 ~ "one", ha_group == 2 ~ "two"))|>
+#   mutate(ha_group = as.factor(ha_group))
 
 ```
-## Prepping our phyloseq object based on our identified genera of interest for NA:
+## Prepping our NA selected genera based on our VSURF:
 
 ```{r}
 
-genera_of_interest_for_na <- c("fda8f480a378db2134a55c9dfb9b6b10", "ed2e115df9ed4a9cf8de15df330c428e",
-                        "e27680d4009f98f30248d823bc17fb8e", "dd90232e0889025ff448018185547d6c",
-                        "dae4414c2d518a1a68ff10aeafb328fa", "cda4e6f933bb3108ea3e92f9db411c00",
-                        "ac8a688dc06b4c9063048eea02c5d39f", "24a60c6448e70d9198ad6ba93520958c",
-                        "15efbfe72b43001ac4b74fa6a89cce83", "02bab2db0a7782cf48dec72cbac4bb20",
-                        "667fb5965fa7ccf7265f991dba0b5c5e", "2486ee9e808d35d25d6d5ebb4d3fdbba",
-                        "606cf1583385e5a58a195ff31b36a6d8")
+na_selected_vars <- vna_result$varselect.interp
 
-ps_clr = ps |>
-  microbiome::transform("clr")
+genera_of_interest_for_na <- nax[, na_selected_vars]
 
-ps_filt_na = prune_taxa(genera_of_interest_for_na, ps_clr)
+na_selected <- as.list(colnames(genera_of_interest_for_na))
+na_selected <- unlist(na_selected)
 
-df_na <- psmelt(ps_filt_na)
-
-df_transformed_na <- df_na |>
-  group_by("Genus") |>
-  mutate(Abundance = scale(Abundance))|>
-  ungroup()
-
-df_pivot_na = df_transformed_na |>
-  select(Sample, na_group, Genus, Abundance) |>
-  pivot_wider(names_from = Genus, values_from = Abundance)
-
-## We will also filter for only group 1 and group 2, as we are interested in seeing if we can predict group 1 vs group 2 rather than group 1 vs control or group 2 vs control.
-
-df_noHA <- df_pivot_na |>
+na_prepped_rf_df <- vsurf_df_pivot_na |>
+  select(na_group, all_of(na_selected))|>
   na.omit()|>
   filter(na_group != "neg")|>
   mutate(na_group = case_when(na_group == 1 ~ "one", na_group == 2 ~ "two"))|>
   mutate(na_group = as.factor(na_group))
 
-df_final_na <- df_noHA|>
-  select(-Sample)
+
 ```
 
 ## Running our RandomForest Model for HA and NA
 
 ```{r}
 
-predictors_na <- df_final_na|>
+## running code for NA/HA RF (THROUGH MANUAL REPLACEMENT)
+
+# predictors_ha <- ha_prepped_rf_df|>
+#   select(-ha_group)
+# 
+# outcome_ha = ha_prepped_rf_df|>
+#   pull(ha_group)
+# 
+# k = 10
+# folds = createFolds(outcome_ha, k=k, list = TRUE)
+# 
+# str(folds)
+# 
+# tune_grid = expand.grid(mtry = c(3,9, 10), splitrule = c(
+#   "gini"), min.node.size = c(100,150, 200)
+# )
+# 
+# 
+# source("reference_functions/randomforest_functions.R")
+# 
+# ## Using Avril's Code from MICB 305 repository
+# 
+# pd_model = run_rf(X= predictors_ha, y = outcome_ha, fold_list = folds, hyper = tune_grid, rngseed = 421)
+
+predictors_na <- na_prepped_rf_df|>
   select(-na_group)
 
-outcome_na = df_final_na|>
+outcome_na = na_prepped_rf_df|>
   pull(na_group)
 
 k = 10
-set.seed(420)
 folds = createFolds(outcome_na, k=k, list = TRUE)
 
 str(folds)
@@ -146,35 +213,6 @@ source("reference_functions/randomforest_functions.R")
 ## Using Avril's Code from MICB 305 repository
 
 pd_model = run_rf(X= predictors_na, y = outcome_na, fold_list = folds, hyper = tune_grid, rngseed = 421)
-
-names(pd_model)
-
-## running the code for HA, simply by replacing the variable names.
-
-predictors <- df_final|>
-  select(-ha_group)
-
-outcome = df_final|>
-  pull(ha_group)
-
-k = 10
-set.seed(420)
-folds = createFolds(outcome, k=k, list = TRUE)
-
-str(folds)
-
-tune_grid = expand.grid(mtry = c(3,10, 12), splitrule = c(
-  "gini"), min.node.size = c(100,150, 200)
-)
-
-
-source("reference_functions/randomforest_functions.R")
-
-## Using Avril's Code (With some minor edits due to the neccesity for multiclass randomforest)
-
-pd_model = run_rf(X= predictors, y = outcome, fold_list = folds, hyper = tune_grid, rngseed = 421)
-
-names(pd_model)
 
 ```
 
@@ -196,6 +234,24 @@ roc_data = data.frame(Dataset = 'df',
                              round(pd_model$auc_test_ci[2], 2)))
 
 
+# ha_auc <- ggplot() +
+#   geom_line(aes(x = 1 - roc_train$specificities, 
+#                 y = roc_train$sensitivities), 
+#             color = "red",size=1) +
+#   geom_line(aes(x = 1 - roc_test$specificities,
+#                 y = roc_test$sensitivities), 
+#             color = "black",size=1) +
+#   geom_abline(slope = 1, intercept = 0, color = "gray", linetype = "dashed",size=1) +
+#   labs(x = "", y = "") +
+#   annotate("text", x = 0.7, y = 0.2, 
+#            label = sprintf("Train (red): %.2f (%.2f-%.2f)\nTest (black): %.2f (%.2f-%.2f)",
+#            auc(roc_train), pd_model$auc_train_ci[1], pd_model$auc_train_ci[2],
+#            auc(roc_test), pd_model$auc_test_ci[1], pd_model$auc_test_ci[2]), 
+#            size = 12) +
+#   theme_minimal(base_size=24)
+# 
+# ha_auc
+
 na_auc <- ggplot() +
   geom_line(aes(x = 1 - roc_train$specificities, 
                 y = roc_train$sensitivities), 
@@ -204,18 +260,19 @@ na_auc <- ggplot() +
                 y = roc_test$sensitivities), 
             color = "black",size=1) +
   geom_abline(slope = 1, intercept = 0, color = "gray", linetype = "dashed",size=1) +
-  labs(x = "False Positive Rate", y = "True Positive Rate") +
+  labs(x = "", y = "") +
   annotate("text", x = 0.7, y = 0.2, 
            label = sprintf("Train (red): %.2f (%.2f-%.2f)\nTest (black): %.2f (%.2f-%.2f)",
            auc(roc_train), pd_model$auc_train_ci[1], pd_model$auc_train_ci[2],
            auc(roc_test), pd_model$auc_test_ci[1], pd_model$auc_test_ci[2]), 
-           size = 6) +
+           size = 12) +
   theme_minimal(base_size=24)
 
 na_auc
 
+
 ```
-## Generating an importance graph for NA randomforest:
+## Generating an importance graph for NA/HA randomforest:
 
 ``` {r}
 
@@ -223,15 +280,15 @@ na_rf_importance_graph <- pd_model$importance %>%
   mutate(Feature = factor(.$Feature,levels = .$Feature)) %>% 
   ggplot(aes(Feature,MeanDecreaseGini,fill=MeanDecreaseGini)) +
   geom_col() +
-  theme_classic(base_size=18) +
-  theme(axis.text.x = element_text(angle=45, vjust = 1, hjust=1)) +
+  theme_classic(base_size=28) +
+  theme(axis.text.x = element_text(angle=90, vjust = 1, hjust=1)) +
   ylab('Importance (Gini)') + xlab(NULL)
 
 na_rf_importance_graph
 
-colnames(df_final_na)
+colnames(na_prepped_rf_df)
 
-temp = ps_filt_na %>% 
+temp = ps_clr %>% 
   subset_taxa(Genus==' g__Pedobacter') %>% 
   psmelt()
 
@@ -246,12 +303,50 @@ pedobacter_graph = temp %>% ggplot(aes(na_group,Abundance)) +
   theme_classic(base_size=16) +
   geom_signif(comparisons = list(c("1", "2")), map_signif_level = TRUE, textsize = 6)+
   labs(x = "NA group", y = "CLR-Transformed Abundance") +
-  theme(axis.title.x = element_text(size = 16),
-        axis.title.y = element_text(size = 16),
-        axis.text = element_text(size = 16))+
+  theme(axis.title.x = element_text(size = 24),
+        axis.title.y = element_text(size = 24),
+        axis.text = element_text(size = 24))+
   ylim(-3, 15)
 
 pedobacter_graph
+
+## HA Graph
+
+# ha_rf_importance_graph <- pd_model$importance %>% 
+#   mutate(Feature = factor(.$Feature,levels = .$Feature)) %>% 
+#   ggplot(aes(Feature,MeanDecreaseGini,fill=MeanDecreaseGini)) +
+#   geom_col() +
+#   theme_classic(base_size=28) +
+#   theme(axis.text.x = element_text(angle=90, vjust = 1, hjust=1)) +
+#   ylab('Importance (Gini)') + xlab(NULL)
+# 
+# ha_rf_importance_graph
+# 
+# colnames(ha_prepped_rf_df)
+# 
+# temp = ps_clr %>% 
+#   subset_taxa(Genus==' g__Bacteroides') %>% 
+#   psmelt()
+# 
+# temp <- temp |>
+#   filter(na_group != "neg")
+# 
+# wilcox.test(Abundance ~ na_group, data = temp)
+# 
+# bacteroides_graph = temp %>% ggplot(aes(na_group,Abundance)) +
+#   geom_boxplot(outlier.shape = NA) +
+#   geom_jitter(height=0, width = 0.25, alpha = .2) +
+#   theme_classic(base_size=16) +
+#   geom_signif(comparisons = list(c("1", "2")), map_signif_level = TRUE, textsize = 6)+
+#   labs(x = "HA group", y = "CLR-Transformed Abundance") +
+#   theme(axis.title.x = element_text(size = 24),
+#         axis.title.y = element_text(size = 24),
+#         axis.text = element_text(size = 24))+
+#   ylim(-3, 15)
+# 
+# bacteroides_graph
+
+
 
 
 ```
@@ -259,7 +354,10 @@ pedobacter_graph
 ## Saving our graphs
 ```{r}
 
-ggsave("../visualizations/figures/ha_randomforest.png", plot = ha_auc, width = 18, height = 10)
+# ggsave("../visualizations/figures/ha_randomforest_auc.png", plot = ha_auc, width = 18, height = 10)
+# ggsave("../visualizations/figures/ha_randomforest_importance.png", plot = ha_rf_importance_graph, width = 18, height = 10)
+# ggsave("../visualizations/figures/ha_randomforest_bacteriodes.png", plot = bacteroides_graph, width = 18, height = 10)
+
 ggsave("../visualizations/figures/na_randomforest_auc.png", plot = na_auc, width = 18, height = 10)
 ggsave("../visualizations/figures/na_randomforest_importance.png", plot = na_rf_importance_graph, width = 18, height = 10)
 ggsave("../visualizations/figures/na_randomforest_pedobacter.png", plot = pedobacter_graph, width = 18, height = 10)
