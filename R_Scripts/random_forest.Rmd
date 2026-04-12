@@ -29,7 +29,6 @@ library(ranger)
 library(pROC)
 library(boot)
 library(MLmetrics)
-library(VSURF)
 ```
 
 ## Loading Datafiles
@@ -42,7 +41,7 @@ ps = readRDS('../processed_data/phyloseq_taxonomy.rds')|>
 
 ```
 
-## Identifying genera of interest for our randomforest model using VSURF package
+## Wrangling our PS object for HA and NA RF model
 
 ```{r}
 
@@ -57,19 +56,19 @@ ps_clr = ps |>
 vsurf_df <- psmelt(ps_clr)
 
 vsurf_df_transformed <- vsurf_df |>
-  group_by("Genus")|>
+  group_by(Genus)|>
   mutate(Abundance = scale(Abundance))|>
-  mutate(Abundance = Abundance[, 1])|>
-  ungroup()
+  ungroup()|>
+  mutate(Abundance = Abundance[, 1])
 
 vsurf_df_transformed <- vsurf_df_transformed |>
     filter(Genus != " g__uncultured")
 
-# vsurf_df_pivot_ha <- vsurf_df_transformed |>
-#   select(Sample, ha_group, Genus, Abundance) |>
-#   pivot_wider(names_from = Genus, values_from = Abundance)|>
-#   filter(ha_group != "neg")|>
-#   select(-Sample)
+ # vsurf_df_pivot_ha <- vsurf_df_transformed |>
+ #   select(Sample, ha_group, Genus, Abundance) |>
+ #   pivot_wider(names_from = Genus, values_from = Abundance)|>
+ #   filter(ha_group != "neg")|>
+ #   select(-Sample)
 
 vsurf_df_pivot_na = vsurf_df_transformed |>
   select(Sample, na_group, Genus, Abundance) |>
@@ -77,98 +76,40 @@ vsurf_df_pivot_na = vsurf_df_transformed |>
   filter(na_group != "neg")|>
   select(-Sample)
 
-#### NA VSURF
-
-nay = as.factor(vsurf_df_pivot_na$na_group)
-
-nax <- vsurf_df_pivot_na|>
-  select(-na_group)
-
-set.seed(421)
-
-vna_result <- VSURF(nax, nay, ntree = 2000)
-
-set.seed(422)
-
-vna_result2 <- VSURF(nax, nay, ntree = 2000)
-
-set.seed(423)
-
-vna_result3 <- VSURF(nax, nay, ntree = 2000)
-
-## We seem to have a relatively unstable set of genera here for our randomforest model.
-## However, we used the data from the first vna_result. A nested cv would be ideal to perform here. 
-
-#### HA VSURF
-
-# hay = as.factor(vsurf_df_pivot_ha$ha_group)
-# 
-# hax <- vsurf_df_pivot_ha|>
-#   select(-ha_group)
-# 
-# set.seed(421)
-# 
-# vha_result <- VSURF(hax, hay, ntree = 2000)
-# 
-# set.seed(422)
-# 
-# vha_result <- VSURF(hax, hay, ntree = 2000)
-# 
-# set.seed(423)
-# 
-# vha_result <- VSURF(hax, hay, ntree = 2000)
-
-## As such, we then get our NA/HA VSURF model. As we are interested in biological significance, we will use varselect.interp as our genera of importance to then go on to create a randomforest model for NA groups. Here, we set seed and rerun the vsurf to see if the same results consistently comes up - in the case of HA, we have 6,62, and 18 that consistently come up. 
-
-
 ```
 
 
-## Prepping our phyloseq object based on our identified genera of interest for HA:
+## Prepping our HA df for RF:
 
 ```{r}
 
-# ha_selected_vars <- vha_result$varselect.interp
-# 
-# genera_of_interest_for_ha <- hax[, ha_selected_vars]
-# 
-# ha_selected <- as.list(colnames(genera_of_interest_for_ha))
-# ha_selected <- unlist(ha_selected)
-# 
 # ha_prepped_rf_df <- vsurf_df_pivot_ha |>
-#   select(ha_group, all_of(ha_selected))|>
 #   na.omit()|>
 #   filter(ha_group != "neg")|>
 #   mutate(ha_group = case_when(ha_group == 1 ~ "one", ha_group == 2 ~ "two"))|>
 #   mutate(ha_group = as.factor(ha_group))
 
 ```
-## Prepping our NA selected genera based on our VSURF:
+## Prepping our NA df for RF:
 
 ```{r}
 
-na_selected_vars <- vna_result$varselect.interp
-
-genera_of_interest_for_na <- nax[, na_selected_vars]
-
-na_selected <- as.list(colnames(genera_of_interest_for_na))
-na_selected <- unlist(na_selected)
-
 na_prepped_rf_df <- vsurf_df_pivot_na |>
-  select(na_group, all_of(na_selected))|>
   na.omit()|>
   filter(na_group != "neg")|>
   mutate(na_group = case_when(na_group == 1 ~ "one", na_group == 2 ~ "two"))|>
   mutate(na_group = as.factor(na_group))
-
-
+# 
 ```
-
-## Running our RandomForest Model for HA and NA
-
+# 
+# ## Running our RandomForest Model for HA and NA
+# 
 ```{r}
+# 
+# ## running code for NA/HA RF (THROUGH MANUAL REPLACEMENT)
+# 
 
-## running code for NA/HA RF (THROUGH MANUAL REPLACEMENT)
+## HA RF
 
 # predictors_ha <- ha_prepped_rf_df|>
 #   select(-ha_group)
@@ -179,18 +120,16 @@ na_prepped_rf_df <- vsurf_df_pivot_na |>
 # k = 10
 # folds = createFolds(outcome_ha, k=k, list = TRUE)
 # 
-# str(folds)
-# 
-# tune_grid = expand.grid(mtry = c(3,9, 10), splitrule = c(
-#   "gini"), min.node.size = c(100,150, 200)
-# )
-# 
+# tune_grid = expand.grid(mtry = c(7, 15, 20), splitrule = c(
+# "gini"), min.node.size = c(10,25,50))
 # 
 # source("reference_functions/randomforest_functions.R")
 # 
 # ## Using Avril's Code from MICB 305 repository
 # 
 # pd_model = run_rf(X= predictors_ha, y = outcome_ha, fold_list = folds, hyper = tune_grid, rngseed = 421)
+
+## NA RF
 
 predictors_na <- na_prepped_rf_df|>
   select(-na_group)
@@ -201,12 +140,8 @@ outcome_na = na_prepped_rf_df|>
 k = 10
 folds = createFolds(outcome_na, k=k, list = TRUE)
 
-str(folds)
-
-tune_grid = expand.grid(mtry = c(3,9, 10), splitrule = c(
-  "gini"), min.node.size = c(100,150, 200)
-)
-
+tune_grid = expand.grid(mtry = c(7, 15, 20), splitrule = c(
+  "gini"), min.node.size = c(10,25,50))
 
 source("reference_functions/randomforest_functions.R")
 
@@ -227,44 +162,50 @@ roc_train = roc(pd_model$train_labels$true_labels,
 
 roc_data = data.frame(Dataset = 'df',
      Training_AUC = round(pd_model$auc_train, 2),
-     Training_AUC_CI = paste0(round(pd_model$auc_train_ci[1], 2), "-", 
+     Training_AUC_CI = paste0(round(pd_model$auc_train_ci[1], 2), "-",
                               round(pd_model$auc_train_ci[2], 2)),
      Testing_AUC = round(pd_model$auc_test, 2),
-     Testing_AUC_CI = paste0(round(pd_model$auc_test_ci[1], 2), "-", 
+     Testing_AUC_CI = paste0(round(pd_model$auc_test_ci[1], 2), "-",
                              round(pd_model$auc_test_ci[2], 2)))
+# 
 
+#### HA SPECIFIC
 
+# 
 # ha_auc <- ggplot() +
-#   geom_line(aes(x = 1 - roc_train$specificities, 
-#                 y = roc_train$sensitivities), 
+#   geom_line(aes(x = 1 - roc_train$specificities,
+#                 y = roc_train$sensitivities),
 #             color = "red",size=1) +
 #   geom_line(aes(x = 1 - roc_test$specificities,
-#                 y = roc_test$sensitivities), 
+#                 y = roc_test$sensitivities),
 #             color = "black",size=1) +
 #   geom_abline(slope = 1, intercept = 0, color = "gray", linetype = "dashed",size=1) +
 #   labs(x = "", y = "") +
-#   annotate("text", x = 0.7, y = 0.2, 
+#   annotate("text", x = 0.7, y = 0.2,
 #            label = sprintf("Train (red): %.2f (%.2f-%.2f)\nTest (black): %.2f (%.2f-%.2f)",
 #            auc(roc_train), pd_model$auc_train_ci[1], pd_model$auc_train_ci[2],
-#            auc(roc_test), pd_model$auc_test_ci[1], pd_model$auc_test_ci[2]), 
+#            auc(roc_test), pd_model$auc_test_ci[1], pd_model$auc_test_ci[2]),
 #            size = 12) +
 #   theme_minimal(base_size=24)
 # 
 # ha_auc
 
+
+#### NA SPECIFIC
+
 na_auc <- ggplot() +
-  geom_line(aes(x = 1 - roc_train$specificities, 
-                y = roc_train$sensitivities), 
+  geom_line(aes(x = 1 - roc_train$specificities,
+                y = roc_train$sensitivities),
             color = "red",size=1) +
   geom_line(aes(x = 1 - roc_test$specificities,
-                y = roc_test$sensitivities), 
+                y = roc_test$sensitivities),
             color = "black",size=1) +
   geom_abline(slope = 1, intercept = 0, color = "gray", linetype = "dashed",size=1) +
   labs(x = "", y = "") +
-  annotate("text", x = 0.7, y = 0.2, 
+  annotate("text", x = 0.7, y = 0.2,
            label = sprintf("Train (red): %.2f (%.2f-%.2f)\nTest (black): %.2f (%.2f-%.2f)",
            auc(roc_train), pd_model$auc_train_ci[1], pd_model$auc_train_ci[2],
-           auc(roc_test), pd_model$auc_test_ci[1], pd_model$auc_test_ci[2]), 
+           auc(roc_test), pd_model$auc_test_ci[1], pd_model$auc_test_ci[2]),
            size = 12) +
   theme_minimal(base_size=24)
 
@@ -276,8 +217,11 @@ na_auc
 
 ``` {r}
 
-na_rf_importance_graph <- pd_model$importance %>% 
-  mutate(Feature = factor(.$Feature,levels = .$Feature)) %>% 
+pd_model$importance <- pd_model$importance |>
+   filter(MeanDecreaseGini >= .6)
+
+na_rf_importance_graph <- pd_model$importance %>%
+  mutate(Feature = factor(.$Feature,levels = .$Feature)) %>%
   ggplot(aes(Feature,MeanDecreaseGini,fill=MeanDecreaseGini)) +
   geom_col() +
   theme_classic(base_size=28) +
@@ -286,10 +230,8 @@ na_rf_importance_graph <- pd_model$importance %>%
 
 na_rf_importance_graph
 
-colnames(na_prepped_rf_df)
-
-temp = ps_clr %>% 
-  subset_taxa(Genus==' g__Pedobacter') %>% 
+temp = ps_clr %>%
+  subset_taxa(Genus==" g__Candidatus_Arthromitus") %>%
   psmelt()
 
 temp <- temp |>
@@ -297,7 +239,7 @@ temp <- temp |>
 
 wilcox.test(Abundance ~ na_group, data = temp)
 
-pedobacter_graph = temp %>% ggplot(aes(na_group,Abundance)) +
+candidatus_graph = temp %>% ggplot(aes(na_group,Abundance)) +
   geom_boxplot(outlier.shape = NA) +
   geom_jitter(height=0, width = 0.25, alpha = .2) +
   theme_classic(base_size=16) +
@@ -308,12 +250,12 @@ pedobacter_graph = temp %>% ggplot(aes(na_group,Abundance)) +
         axis.text = element_text(size = 24))+
   ylim(-3, 15)
 
-pedobacter_graph
+candidatus_graph
 
 ## HA Graph
 
-# ha_rf_importance_graph <- pd_model$importance %>% 
-#   mutate(Feature = factor(.$Feature,levels = .$Feature)) %>% 
+# ha_rf_importance_graph <- pd_model$importance %>%
+#   mutate(Feature = factor(.$Feature,levels = .$Feature)) %>%
 #   ggplot(aes(Feature,MeanDecreaseGini,fill=MeanDecreaseGini)) +
 #   geom_col() +
 #   theme_classic(base_size=28) +
@@ -322,18 +264,18 @@ pedobacter_graph
 # 
 # ha_rf_importance_graph
 # 
-# colnames(ha_prepped_rf_df)
+# unique(pd_model$importance$Feature)
 # 
-# temp = ps_clr %>% 
-#   subset_taxa(Genus==' g__Bacteroides') %>% 
+# temp = ps_clr %>%
+#   subset_taxa(Genus==" g__Bacteroides") %>%
 #   psmelt()
 # 
 # temp <- temp |>
 #   filter(na_group != "neg")
 # 
-# wilcox.test(Abundance ~ na_group, data = temp)
+# wilcox.test(Abundance ~ ha_group, data = temp)
 # 
-# bacteroides_graph = temp %>% ggplot(aes(na_group,Abundance)) +
+# bacteroides_graph = temp %>% ggplot(aes(ha_group,Abundance)) +
 #   geom_boxplot(outlier.shape = NA) +
 #   geom_jitter(height=0, width = 0.25, alpha = .2) +
 #   theme_classic(base_size=16) +
@@ -360,7 +302,8 @@ pedobacter_graph
 
 ggsave("../visualizations/figures/na_randomforest_auc.png", plot = na_auc, width = 18, height = 10)
 ggsave("../visualizations/figures/na_randomforest_importance.png", plot = na_rf_importance_graph, width = 18, height = 10)
-ggsave("../visualizations/figures/na_randomforest_pedobacter.png", plot = pedobacter_graph, width = 18, height = 10)
+ggsave("../visualizations/figures/na_randomforest_candidatus.png", plot = candidatus_graph, width = 18, height = 10)
+
 
 
 
