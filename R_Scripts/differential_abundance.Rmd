@@ -27,7 +27,6 @@ ps = readRDS('../processed_data/phyloseq_taxonomy.rds')
 # setting seed
 set.seed(412)
 
-
 ps_genus = tax_glom(ps, 'Genus')
 
 temp_relab = transform(ps_genus, 'compositional')
@@ -37,41 +36,232 @@ ps_filt = prune_taxa(taxa_names(temp_filt),ps_genus)
 ps_filt
 ```
 
-# HA Groups
+# HA Grouping Comparison
 
 ## Running ANCOMBC2 Analysis
 
-There are three comparisons to be made for HA groups:
-
--   HA group 1 vs HA group 2
-
--   HA group 1 vs uninfected (negative)
-
--   HA group 2 vs uninfected (negative)
-
-ANCOMBC2 on default takes the first alphabetical group in ha_group as the reference, meaning without modifications it will take HA group 1 as the reference. To compare HA group 2 vs uninfected, Frederick Huang (author of ANCOMBC2) suggested subsetting the data.
-
 ```{r}
 ### HA Group 1 as reference ###
-ha1_out = ancombc2(data = ps_filt, 
+ha_out = ancombc2(data = ps_filt, 
                fix_formula = 'ha_group', 
                p_adj_method = 'BH',
-               prv_cut = 0.3) # increased due to small sample size
+               prv_cut = 0.3,
+               group = 'ha_group',
+               pairwise = TRUE) # increased due to small sample size
+res_prim = ha_out$res
+res_pair = ha_out$res_pair
 
-ha1_statistical_table = ha1_out$res
+# Get genera names from genera ASVs 
+genera_ha <- data.frame(ps_filt@tax_table) %>%
+  rownames_to_column("taxon") %>%
+  filter(taxon %in% res_pair$taxon) %>%
+  select(taxon, Genus) %>%
+  mutate(Genus = as.character(Genus),
+         Genus = str_remove(Genus, "^\\s*g__"))
 
-### HA Group 2 as reference ###
-# subset to only group2 and neg
-# keep only group2 and neg samples
-sub_ps_ha  <- ps_filt %>%
-  subset_samples(ha_group %in% c("2", "neg"))
+# Generate data layer that shows log2fold change 
+ha_lfc = res_pair %>%
+    filter(diff_robust_ha_group2 |
+    diff_robust_ha_groupneg |
+    diff_robust_ha_groupneg_ha_group2) %>%
+    mutate(lfc1 = ifelse(diff_robust_ha_group2,
+                  round(lfc_ha_group2, 2), 0),
+         lfc2 = ifelse(diff_robust_ha_groupneg,
+                  round(lfc_ha_groupneg, 2), 0),
+         lfc3 = ifelse(diff_robust_ha_groupneg_ha_group2,
+                  round(lfc_ha_groupneg_ha_group2, 2), 0)
+  ) %>%
+    pivot_longer(cols = lfc1:lfc3, 
+                        names_to = "group", values_to = "value") %>%
+    arrange(taxon)
 
-ha2_out = ancombc2(data = sub_ps_ha, 
-               fix_formula = 'ha_group', 
+# Generate data layer that filters taxa that passes robust function, and color accordingly
+ha_robust_color = res_pair %>%
+    filter(diff_robust_ha_group2 |
+    diff_robust_ha_groupneg |
+    diff_robust_ha_groupneg_ha_group2) %>%
+    mutate(lfc1 = ifelse(diff_robust_ha_group2, 
+                                "aquamarine3", "black"),
+                  lfc2 = ifelse(diff_robust_ha_groupneg, 
+                                "aquamarine3", "black"),
+                  lfc3 = ifelse(diff_robust_ha_groupneg_ha_group2, 
+                                "aquamarine3", "black")) %>%
+    pivot_longer(cols = lfc1:lfc3, 
+                        names_to = "group", values_to = "color") %>%
+    arrange(taxon)
+
+# add Genus column into table 
+ha_plot_df <- ha_lfc %>%
+ left_join(ha_robust_color, by = c("taxon", "group")) %>%
+left_join(genera_ha, by = "taxon")
+
+ha_plot_df$group = recode(ha_plot_df$group, 
+                          `lfc1` = "HA Group 2 - HA Group 1",
+                          `lfc2` = "Negative - HA Group 1",
+                          `lfc3` = "Negative - HA Group 2")
+ha_plot_df$group = factor(ha_plot_df$group, 
+                          levels = c("HA Group 2 - HA Group 1",
+                                     "Negative - HA Group 1", 
+                                     "Negative - HA Group 2"))
+
+lo = floor(min(ha_plot_df$value))
+up = ceiling(max(ha_plot_df$value))
+mid = (lo + up)/2
+ha_paired_heatmap = ha_plot_df %>%
+    ggplot(aes(x = group, y = Genus, fill = value)) + 
+    geom_tile(color = "black") +
+    scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                         na.value = "white", midpoint = mid, limit = c(lo, up),
+                         name = NULL) +
+    geom_text(aes(label = value, color = color), size = 8) +
+    scale_color_identity(guide = FALSE) +
+    labs(x = NULL, y = NULL, title = "Log fold changes: HA Grouping Comparisons") +
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5, size = 30),
+          panel.grid.minor.y = element_blank(),
+          axis.text.x = element_text(size = 20),
+          axis.text.y = element_text(size = 20),
+          legend.text = element_text(hjust = 1, size = 20),
+          legend.key.height = unit(5, "cm"),
+          legend.key.width  = unit(2, "cm"))
+ha_paired_heatmap
+```
+
+```{r}
+
+```
+
+# NA Grouping Comparison
+
+## Running ANCOMBC2 Analysis
+
+```{r}
+# Running ANCOMBC2 analysis on NA Group
+na_out = ancombc2(data = ps_filt, 
+               fix_formula = 'na_group', 
                p_adj_method = 'BH',
-               prv_cut = 0.3) # increased due to small sample size
+               prv_cut = 0.3,
+               group = 'na_group',
+               pairwise = TRUE) # increased due to small sample size
+na_res_prim = na_out$res
+na_res_pair = na_out$res_pair
 
-ha2_statistical_table = ha2_out$res
+# Get genera names from genera ASVs 
+genera_na <- data.frame(ps_filt@tax_table) %>%
+  rownames_to_column("taxon") %>%
+  filter(taxon %in% na_res_pair$taxon) %>%
+  select(taxon, Genus) %>%
+  mutate(Genus = as.character(Genus),
+         Genus = str_remove(Genus, "^\\s*g__"))
+
+# Generate data layer that shows log2fold change 
+# for interpretation purposes: if taxa doesn't pass robust function, returns as log2fold change
+# 0; if passes, shows log2fold change. This ensures that non-differentially abundant taxa
+# doesn't misleadingly show up as appearing "differentially abundant"
+
+na_lfc = na_res_pair %>%
+  filter(diff_robust_na_group2 |
+    diff_robust_na_groupneg |
+    diff_robust_na_groupneg_na_group2) %>%
+  mutate(lfc1 = ifelse(diff_robust_na_group2,
+                  round(lfc_na_group2, 2), 0),
+         lfc2 = ifelse(diff_robust_na_groupneg,
+                  round(lfc_na_groupneg, 2), 0),
+         lfc3 = ifelse(diff_robust_na_groupneg_na_group2,
+                  round(lfc_na_groupneg_na_group2, 2), 0)
+  ) %>%
+  pivot_longer(cols = lfc1:lfc3,
+               names_to = "group", values_to = "value") %>%
+  arrange(taxon)
+
+
+# Generate data layer that filters taxa that passes robust function, and color accordingly
+na_robust_color = na_res_pair %>%
+    filter(diff_robust_na_group2 |
+    diff_robust_na_groupneg |
+    diff_robust_na_groupneg_na_group2) %>%
+    mutate(lfc1 = ifelse(diff_robust_na_group2, 
+                                "aquamarine3", "black"),
+                  lfc2 = ifelse(diff_robust_na_groupneg, 
+                                "aquamarine3", "black"),
+                  lfc3 = ifelse(diff_robust_na_groupneg_na_group2, 
+                                "aquamarine3", "black")) %>%
+    pivot_longer(cols = lfc1:lfc3, 
+                        names_to = "group", values_to = "color") %>%
+    arrange(taxon)
+
+# add Genus column into table 
+na_plot_df <- na_lfc %>%
+ left_join(na_robust_color, by = c("taxon", "group")) %>%
+  left_join(genera_na, by = "taxon")
+
+na_plot_df$group = recode(na_plot_df$group, 
+                          `lfc1` = "NA Group 2 - NA Group 1",
+                          `lfc2` = "Negative - NA Group 1",
+                          `lfc3` = "Negative - NA Group 2")
+na_plot_df$group = factor(na_plot_df$group, 
+                          levels = c("NA Group 2 - NA Group 1",
+                                     "Negative - NA Group 1", 
+                                     "Negative - NA Group 2"))
+```
+
+Plotting heatmaps
+
+```{r}
+hana_lo <- floor(min(c(ha_plot_df$value, na_plot_df$value), na.rm = TRUE))
+hana_up <- ceiling(max(c(ha_plot_df$value, na_plot_df$value), na.rm = TRUE))
+hana_mid <- 0
+
+# HA
+ha_paired_heatmap = ha_plot_df %>%
+    ggplot(aes(x = group, y = Genus, fill = value)) + 
+    geom_tile(color = "black") +
+    scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                         na.value = "white", midpoint = hana_mid, limit = c(hana_lo, hana_up),
+                         name = NULL) +
+    geom_text(aes(label = value, color = color), size = 8) +
+    scale_color_identity(guide = FALSE) +
+    labs(x = NULL, y = NULL, title = "Log fold changes: HA Grouping Comparisons") +
+    theme_minimal() +
+    theme(plot.title = element_text(hjust = 0.5, size = 30),
+          panel.grid.minor.y = element_blank(),
+          axis.text.x = element_text(size = 20),
+          axis.text.y = element_text(size = 20),
+          legend.text = element_text(hjust = 1, size = 20),
+          legend.key.height = unit(5, "cm"),
+          legend.key.width  = unit(2, "cm"))
+ha_paired_heatmap
+
+# NA 
+lo = floor(min(na_plot_df$value))
+up = ceiling(max(na_plot_df$value))
+mid = (lo + up)/2
+na_paired_heatmap = na_plot_df %>%
+    ggplot(aes(x = group, y = Genus, fill = value)) + 
+    geom_tile(color = "black") + 
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                         na.value = "white", midpoint = hana_mid, limit = c(hana_lo, hana_up),
+                         name = NULL) +
+    geom_text(aes(label = value, color = color), size = 8) +
+    scale_color_identity(guide = FALSE) +
+    labs(x = NULL, y = NULL, title = "Log fold changes: NA Grouping Comparisons") +
+    theme_minimal() +
+   theme(plot.title = element_text(hjust = 0.5, size = 30),
+          panel.grid.minor.y = element_blank(),
+          axis.text.x = element_text(size = 20),
+          axis.text.y = element_text(size = 20),
+          legend.text = element_text(hjust = 1, size = 20),
+          legend.key.height = unit(5, "cm"),
+         legend.key.width  = unit(2, "cm"))
+na_paired_heatmap
+```
+
+# Saving Graphs Generated
+
+```{r}
+ggsave("../visualizations/figures/differential_abundance_ha.png", plot = ha_paired_heatmap, width = 15, height = 20)
+
+ggsave("../visualizations/figures/differential_abundance_na.png", plot = na_paired_heatmap, width = 15, height = 20)
 ```
 
 ## Volcano Plots
@@ -135,15 +325,6 @@ vplot_h2neg
 ## Log2Fold Change Plots
 
 ```{r}
-### extract Genus taxonomy from phyloseq for downstream plots ###
-# this is needed for labeling Genus names instead of ASV names, for both HA and NA groupings
-genus_tax <- data.frame(
-  taxon = taxa_names(ps_filt),
-  Genus = as.data.frame(tax_table(ps_filt))$Genus
-) %>%
-    mutate(Genus = str_remove(Genus, "g__"))
-
-
 ### HA Group 1 vs Neg ###
 df_h1neg = ha1_statistical_table %>%
   left_join(genus_tax, by = "taxon") 
@@ -208,37 +389,7 @@ fig_h2neg = df_fig_h2neg %>%
 fig_h2neg
 ```
 
-# NA Groups
-
-## Running ANCOMBC2 Analysis
-
-There are three comparisons to be made for HA groups:
-
--   NA group 1 vs NA group 2
-
--   NA group 1 vs uninfected (negative)
-
--   NA group 2 vs uninfected (negative)
-
-```{r}
-### NA Group 1 as reference ###
-na1_out = ancombc2(data = ps_filt, 
-               fix_formula = 'na_group', 
-               p_adj_method = 'BH',
-               prv_cut = 0.3) # increased due to small sample size
-
-na1_statistical_table = na1_out$res
-
-### NA Group 2 as reference ###
-sub_ps_na <- subset_samples(ps_filt, na_group %in% c("2", "neg")) # subseting data to remove ha group_1
-
-na2_out = ancombc2(data = sub_ps_na, 
-               fix_formula = 'na_group', 
-               p_adj_method = 'BH',
-               prv_cut = 0.3) # increased due to small sample size
-
-na2_statistical_table = na2_out$res
-```
+# 
 
 ## Volcano Plots
 
@@ -367,7 +518,7 @@ fig_n2neg = df_fig_n2neg %>%
 fig_n2neg
 ```
 
-# Saving Graphs Generated
+# 
 
 ```{r}
 ### Volcano Plots ###
@@ -382,6 +533,4 @@ ggsave("../visualizations/figures/differential_abundance_h1vsneg.png", plot = fi
 ggsave("../visualizations/figures/differential_abundance_h2vsneg.png", plot = fig_h2neg, width = 18, height = 10)
 ggsave("../visualizations/figures/differential_abundance_n1vsneg.png", plot = fig_n1neg, width = 18, height = 10)
 ggsave("../visualizations/figures/differential_abundance_n2vsneg.png", plot = fig_n2neg, width = 18, height = 10)
-
-
 ```
