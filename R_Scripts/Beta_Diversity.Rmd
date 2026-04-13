@@ -362,6 +362,19 @@ Permanova_HA_G2_vs_neg
 # This one showed  significance p= 0.01333 indication a statisticaly significant differences between the beta diversity of G2 vs neg. This indicates that group 2 HA influenza viruses may have a stronger affect in changing the beta diversity of the coacle microbiome. 
 
 
+
+
+# adjusted P values using the Benjamini-Hochberg procedure
+p_HA<-c("0.3286","0.09864","0.01333")
+p.adjust(p_HA, method = "BH")
+
+# the adjusted P values are as follows:
+# G1 vs G2 = 0.32860 
+# G1 vs neg = 0.19728 
+# G2 vs neg = 0.03999
+
+
+
 ```
 
 
@@ -542,6 +555,14 @@ Permanova_NA_G2_vs_neg
 # This one showed significance p= 0.04059 indcation a statisticaly significant differences between the beta diversity of G2 vs neg. This indicates that group 2 HA influenza viruses may have a stronger affect in changing the beta diversity of the coacle microbiome. 
 
 
+# adjusted P values using the Benjamini-Hochberg procedure
+p_NA<-c("0.2812","0.3379","0.04059")
+p.adjust(p_NA, method = "BH")
+
+# the adjusted P values are as follows:
+# G1 vs G2 = 0.56240 
+# G1 vs neg = 0.56240 
+# G2 vs neg = 0.12177
 
 
 
