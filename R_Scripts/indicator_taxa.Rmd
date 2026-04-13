@@ -87,7 +87,7 @@ format_summary_table = function(ps, ita_results, grp1_name = "s.1", grp2_name = 
     relocate(Genus, .before = grp1_name) %>%
     mutate(stat = round(stat, 3)) %>%
     mutate(p.value = round(p.value, 3)) %>%
-    rename("Indicator Value" = stat, "P Value" = p.value)
+    rename("Indicator Value" = stat, "P Value (Adjusted)" = p.value)
   
   # Re-label indicator 0/1 markers with ✘/✔
   for(col in c(grp1_name, grp2_name, uninfected_name)) {
