@@ -1,7 +1,7 @@
 ---
 title: "indicator_taxa"
 output: html_document
-creator: "Alex Elbaz"
+author: "Alex Elbaz"
 ---
 
 # Indicator Taxa Analysis
@@ -105,6 +105,9 @@ format_summary_table = function(ps, ita_results, grp1_name = "s.1", grp2_name = 
 }
 
 
+# Save indicator taxa analysis table formatted appropriately.
+# tbl: indicator taxa results table
+# name: name for the output table file
 save_ita_tbl = function(tbl, name) {
   # Order table rows consistently prior to exporting the figure
   tbl = tbl %>% arrange(Genus, desc("Indicator Value"))
