@@ -17,7 +17,7 @@ library(ggplot2)
 library(ggrepel)
 ```
 
-Wrangling steps
+## Wrangling steps
 
 ```{r}
 ps = readRDS('../processed_data/phyloseq_taxonomy.rds')
@@ -26,9 +26,10 @@ ps = readRDS('../processed_data/phyloseq_taxonomy.rds')
 ```{r}
 # setting seed
 set.seed(412)
-
+# Taxa is considered at the Genus level 
 ps_genus = tax_glom(ps, 'Genus')
 
+# filter for taxa with mean abundance of less than 0.0001 to reduce noise 
 temp_relab = transform(ps_genus, 'compositional')
 temp_filt = filter_taxa(temp_relab, function(x) mean(x) >= 0.0001, TRUE)
 
@@ -38,16 +39,14 @@ ps_filt
 
 # HA Grouping Comparison
 
-## Running ANCOMBC2 Analysis
-
 ```{r}
-### HA Group 1 as reference ###
+# Running ANCOMBC2 Analysis
 ha_out = ancombc2(data = ps_filt, 
                fix_formula = 'ha_group', 
                p_adj_method = 'BH',
-               prv_cut = 0.3,
+               prv_cut = 0.3, # increased due to small sample size
                group = 'ha_group',
-               pairwise = TRUE) # increased due to small sample size
+               pairwise = TRUE) # set to true as multiple pairwise comparison will be done 
 res_prim = ha_out$res
 res_pair = ha_out$res_pair
 
@@ -75,7 +74,7 @@ ha_lfc = res_pair %>%
                         names_to = "group", values_to = "value") %>%
     arrange(taxon)
 
-# Generate data layer that filters taxa that passes robust function, and color accordingly
+# Generate data layer that filters taxa that passes robust function
 ha_robust_color = res_pair %>%
     filter(diff_robust_ha_group2 |
     diff_robust_ha_groupneg |
@@ -95,6 +94,7 @@ ha_plot_df <- ha_lfc %>%
  left_join(ha_robust_color, by = c("taxon", "group")) %>%
 left_join(genera_ha, by = "taxon")
 
+# labelling grouping comparison names accordingly 
 ha_plot_df$group = recode(ha_plot_df$group, 
                           `lfc1` = "HA Group 2 - HA Group 1",
                           `lfc2` = "Negative - HA Group 1",
@@ -103,28 +103,6 @@ ha_plot_df$group = factor(ha_plot_df$group,
                           levels = c("HA Group 2 - HA Group 1",
                                      "Negative - HA Group 1", 
                                      "Negative - HA Group 2"))
-
-lo = floor(min(ha_plot_df$value))
-up = ceiling(max(ha_plot_df$value))
-mid = (lo + up)/2
-ha_paired_heatmap = ha_plot_df %>%
-    ggplot(aes(x = group, y = Genus, fill = value)) + 
-    geom_tile(color = "black") +
-    scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                         na.value = "white", midpoint = mid, limit = c(lo, up),
-                         name = NULL) +
-    geom_text(aes(label = value, color = color), size = 8) +
-    scale_color_identity(guide = FALSE) +
-    labs(x = NULL, y = NULL, title = "Log fold changes: HA Grouping Comparisons") +
-    theme_minimal() +
-    theme(plot.title = element_text(hjust = 0.5, size = 30),
-          panel.grid.minor.y = element_blank(),
-          axis.text.x = element_text(size = 20),
-          axis.text.y = element_text(size = 20),
-          legend.text = element_text(hjust = 1, size = 20),
-          legend.key.height = unit(5, "cm"),
-          legend.key.width  = unit(2, "cm"))
-ha_paired_heatmap
 ```
 
 ```{r}
@@ -132,8 +110,6 @@ ha_paired_heatmap
 ```
 
 # NA Grouping Comparison
-
-## Running ANCOMBC2 Analysis
 
 ```{r}
 # Running ANCOMBC2 analysis on NA Group
@@ -195,6 +171,7 @@ na_plot_df <- na_lfc %>%
  left_join(na_robust_color, by = c("taxon", "group")) %>%
   left_join(genera_na, by = "taxon")
 
+# labelling grouping comparison names accordingly 
 na_plot_df$group = recode(na_plot_df$group, 
                           `lfc1` = "NA Group 2 - NA Group 1",
                           `lfc2` = "Negative - NA Group 1",
@@ -205,332 +182,67 @@ na_plot_df$group = factor(na_plot_df$group,
                                      "Negative - NA Group 2"))
 ```
 
-Plotting heatmaps
+## Plotting heatmaps
 
 ```{r}
-hana_lo <- floor(min(c(ha_plot_df$value, na_plot_df$value), na.rm = TRUE))
-hana_up <- ceiling(max(c(ha_plot_df$value, na_plot_df$value), na.rm = TRUE))
+# manual scaling of colors: minimum refers to minimum log2fold across both HA and NA grouping
+# comaprisons; maximum refers to maximum log2fold; mid refers to no significance ie. a log2fold
+# change of 0 
+hana_lo <- floor(min(c(ha_plot_df$value, na_plot_df$value)))
+hana_up <- ceiling(max(c(ha_plot_df$value, na_plot_df$value)))
 hana_mid <- 0
 
-# HA
+# Heatmap for HA Groupings 
 ha_paired_heatmap = ha_plot_df %>%
     ggplot(aes(x = group, y = Genus, fill = value)) + 
     geom_tile(color = "black") +
     scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                         na.value = "white", midpoint = hana_mid, limit = c(hana_lo, hana_up),
-                         name = NULL) +
-    geom_text(aes(label = value, color = color), size = 8) +
-    scale_color_identity(guide = FALSE) +
-    labs(x = NULL, y = NULL, title = "Log fold changes: HA Grouping Comparisons") +
+                         na.value = "white", midpoint = hana_mid, limits = c(hana_lo, hana_up)) +
+    geom_text(aes(label = value), size = 8, color = "black") +
+    labs(x = NULL, y = NULL) +
     theme_minimal() +
     theme(plot.title = element_text(hjust = 0.5, size = 30),
           panel.grid.minor.y = element_blank(),
           axis.text.x = element_text(size = 20),
           axis.text.y = element_text(size = 20),
           legend.text = element_text(hjust = 1, size = 20),
-          legend.key.height = unit(5, "cm"),
-          legend.key.width  = unit(2, "cm"))
+          legend.title = element_text(size = 20)) +
+  guides(fill = guide_colorbar(
+        title = "Log2-Fold Change",
+        title.hjust = 0.5,
+        title.position = "top",
+        barheight = unit(15, "cm"),
+        barwidth = unit(2, "cm")))
 ha_paired_heatmap
 
-# NA 
-lo = floor(min(na_plot_df$value))
-up = ceiling(max(na_plot_df$value))
-mid = (lo + up)/2
+# Heatmap for NA Groupings 
 na_paired_heatmap = na_plot_df %>%
     ggplot(aes(x = group, y = Genus, fill = value)) + 
     geom_tile(color = "black") + 
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                         na.value = "white", midpoint = hana_mid, limit = c(hana_lo, hana_up),
-                         name = NULL) +
-    geom_text(aes(label = value, color = color), size = 8) +
-    scale_color_identity(guide = FALSE) +
-    labs(x = NULL, y = NULL, title = "Log fold changes: NA Grouping Comparisons") +
+                         na.value = "white", midpoint = hana_mid, limits = c(hana_lo, hana_up)) +
+    geom_text(aes(label = value), size = 8, color = "black") +
+    labs(x = NULL, y = NULL) +
     theme_minimal() +
    theme(plot.title = element_text(hjust = 0.5, size = 30),
           panel.grid.minor.y = element_blank(),
           axis.text.x = element_text(size = 20),
           axis.text.y = element_text(size = 20),
           legend.text = element_text(hjust = 1, size = 20),
-          legend.key.height = unit(5, "cm"),
-         legend.key.width  = unit(2, "cm"))
+         legend.title = element_text(size = 20)) +
+  guides(fill = guide_colorbar(
+        title = "Log2-Fold Change",
+        title.hjust = 0.5,
+        title.position = "top",
+        barheight = unit(15, "cm"),
+        barwidth = unit(2, "cm")))
 na_paired_heatmap
 ```
 
 # Saving Graphs Generated
 
 ```{r}
-ggsave("../visualizations/figures/differential_abundance_ha.png", plot = ha_paired_heatmap, width = 15, height = 20)
+ggsave("../visualizations/figures/differential_abundance_ha.png", plot = ha_paired_heatmap, width = 15, height = 12)
 
-ggsave("../visualizations/figures/differential_abundance_na.png", plot = na_paired_heatmap, width = 15, height = 20)
-```
-
-## Volcano Plots
-
-```{r}
-### HA Group1 vs HA Group2 ### 
-ha1_statistical_table$association_h1h2 = ifelse(ha1_statistical_table$q_ha_group2 < 0.05 & ha1_statistical_table$lfc_ha_group2 > 0, "Enriched", "Not significant")
-ha1_statistical_table$association_h1h2 = ifelse(ha1_statistical_table$q_ha_group2 < 0.05 & ha1_statistical_table$lfc_ha_group2 < 0, "Depleted",ha1_statistical_table$association_h1h2)
-
-vplot_h1h2 <- ggplot(ha1_statistical_table, aes(x = as.numeric(lfc_ha_group2), y = -log10(as.numeric(q_ha_group2)), color = association_h1h2)) +
-  geom_point(size = 5) +
-  labs(x = "Log2 Fold Change", y = "-log10(p-value)",
-       title = "HA Group 1 vs HA Group 2") +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
-  theme_bw() + 
-  scale_color_manual(values = c(
-  "Enriched" = "#F8766D",
-  "Depleted" = "aquamarine3",
-  "Not significant" = "grey"
-))+ 
-  theme(plot.title = element_text(hjust = 0.5, size = 30),
-          panel.grid.minor.y = element_blank(),
-          axis.title.x = element_text(size = 18),
-          axis.text.x = element_text(hjust = 1, size = 18),
-          axis.title.y = element_text(size = 18),
-          axis.text.y = element_text(hjust=1, size = 18),
-          legend.text = element_text(hjust = 1, size = 12))
-
-
-vplot_h1h2
-
-### HA Group1 vs neg ### 
-ha1_statistical_table$association_h1neg = ifelse(ha1_statistical_table$q_ha_groupneg < 0.05 & ha1_statistical_table$lfc_ha_groupneg > 0, "Enriched", "Not significant")
-ha1_statistical_table$association_h1neg = ifelse(ha1_statistical_table$q_ha_groupneg < 0.05 & ha1_statistical_table$lfc_ha_groupneg < 0, "Depleted",ha1_statistical_table$association_h1neg)
-
-vplot_h1neg <- ggplot(ha1_statistical_table, aes(x = as.numeric(lfc_ha_groupneg), y = -log10(as.numeric(q_ha_groupneg)), color = association_h1neg)) +
-  geom_point() +
-  labs(x = "Log2 Fold Change", y = "-log10(p-value)",
-       title = "Volcano Plot H1 vs neg") +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
-  theme_bw()
-
-
-vplot_h1neg
-
-### HA Group2 vs neg ###
-ha2_statistical_table$association_h2neg = ifelse(ha2_statistical_table$q_ha_groupneg < 0.05 & ha2_statistical_table$lfc_ha_groupneg > 0, "Enriched", "Not significant")
-ha2_statistical_table$association_h2neg = ifelse(ha2_statistical_table$q_ha_groupneg < 0.05 & ha2_statistical_table$lfc_ha_groupneg < 0, "Depleted", ha2_statistical_table$association_h2neg)
-
-vplot_h2neg <- ggplot(ha2_statistical_table, aes(x = as.numeric(lfc_ha_groupneg), y = -log10(as.numeric(q_ha_groupneg)), color = association_h2neg)) +
-  geom_point() +
-  labs(x = "Log2 Fold Change", y = "-log10(p-value)",
-       title = "Volcano Plot H2 vs neg") +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
-  theme_bw()
-
-
-vplot_h2neg
-```
-
-## Log2Fold Change Plots
-
-```{r}
-### HA Group 1 vs Neg ###
-df_h1neg = ha1_statistical_table %>%
-  left_join(genus_tax, by = "taxon") 
-
-df_fig_h1neg = df_h1neg %>%
-    filter(diff_robust_ha_groupneg == T) %>% 
-    mutate(direct = ifelse(lfc_ha_groupneg > 0, "Positive LFC", "Negative LFC"),
-                  color = ifelse(passed_ss_ha_groupneg == 1, "aquamarine3", "black"),
-                  Genus = reorder(Genus, -lfc_ha_groupneg))
-df_fig_h1neg$direct = factor(df_fig_h1neg$direct, 
-                           levels = c("Positive LFC", "Negative LFC"))
-  
-fig_h1neg = df_fig_h1neg %>%
-    ggplot(aes(x = Genus, y = lfc_ha_groupneg, fill = direct)) + 
-    geom_bar(stat = "identity", width = 0.7, color = "black", 
-             position = position_dodge(width = 0.4)) +
-    geom_errorbar(aes(ymin = lfc_ha_groupneg - se_ha_groupneg, ymax = lfc_ha_groupneg + se_ha_groupneg), 
-                  width = 0.2, position = position_dodge(0.05), color = "black") + 
-    labs(x = NULL, y = "Log2 Fold Change", 
-         title = "Log2 FC HA Group 1/Uninfected") + 
-    scale_fill_discrete(name = NULL) +
-    scale_color_discrete(name = NULL) +
-    theme_bw() + 
-    theme(plot.title = element_text(hjust = 0.5, size = 30),
-          panel.grid.minor.y = element_blank(),
-          axis.text.x = element_text(angle = 90, hjust = 1, size = 25),
-          axis.title.y = element_text(size = 18),
-          axis.text.y = element_text(hjust=1, size = 18),
-          legend.text = element_text(hjust = 1, size = 12))
-fig_h1neg
-
-### HA Group 2 vs Neg ###
-df_h2neg = ha2_statistical_table %>%
-  left_join(genus_tax, by = "taxon") 
-
-df_fig_h2neg = df_h2neg %>%
-    filter(diff_robust_ha_groupneg == T) %>% 
-    mutate(direct = ifelse(lfc_ha_groupneg > 0, "Positive LFC", "Negative LFC"),
-                  color = ifelse(passed_ss_ha_groupneg == 1, "aquamarine3", "black"),
-                  Genus = reorder(Genus, -lfc_ha_groupneg))
-
-df_fig_h2neg$direct = factor(df_fig_h2neg$direct, 
-                           levels = c("Positive LFC", "Negative LFC"))
-  
-fig_h2neg = df_fig_h2neg %>%
-    ggplot(aes(x = Genus, y = lfc_ha_groupneg, fill = direct)) + 
-    geom_bar(stat = "identity", width = 0.7, color = "black", 
-             position = position_dodge(width = 0.4)) +
-    geom_errorbar(aes(ymin = lfc_ha_groupneg - se_ha_groupneg, ymax = lfc_ha_groupneg + se_ha_groupneg), 
-                  width = 0.2, position = position_dodge(0.05), color = "black") + 
-    labs(x = NULL, y = "Log2 Fold Change", 
-         title = "Log2 FC HA Group 2/Uninfected") + 
-    scale_fill_discrete(name = NULL) +
-    scale_color_discrete(name = NULL) +
-    theme_bw() + 
-    theme(plot.title = element_text(hjust = 0.5, size = 30),
-          panel.grid.minor.y = element_blank(),
-          axis.text.x = element_text(angle = 90, hjust = 1, size = 25),
-          axis.title.y = element_text(size = 18),
-          axis.text.y = element_text(hjust=1, size = 18),
-          legend.text = element_text(hjust = 1, size = 12))
-fig_h2neg
-```
-
-# 
-
-## Volcano Plots
-
-```{r}
-### NA Group1 vs NA Group2 ### 
-na1_statistical_table$association_n1n2 = ifelse(na1_statistical_table$q_na_group2 < 0.05 & na1_statistical_table$lfc_na_group2 > 0, "Enriched", "Not significant")
-na1_statistical_table$association_n1n2 = ifelse(na1_statistical_table$q_na_group2 < 0.05 & na1_statistical_table$lfc_na_group2 < 0, "Depleted",na1_statistical_table$association_n1n2)
-
-vplot_n1n2 <- ggplot(na1_statistical_table, aes(x = as.numeric(lfc_na_group2), y = -log10(as.numeric(q_na_group2)), color = association_n1n2)) +
-  geom_point(size = 5 ) +
-   scale_color_discrete(name = NULL) + 
-  labs(x = "Log2 Fold Change", y = "-log10(p-value)",
-       title = "Volcano Plot N1 vs N2") +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
-  theme_bw() + 
-   scale_color_manual(values = c(
-  "Enriched" = "#F8766D",
-  "Depleted" = "#008EEC",
-  "Not significant" = "grey"
-))+
-   theme(plot.title = element_text(hjust = 0.5, size = 30),
-          panel.grid.minor.y = element_blank(),
-          axis.title.x = element_text(size = 18),
-          axis.text.x = element_text(hjust = 1, size = 18),
-          axis.title.y = element_text(size = 18),
-          axis.text.y = element_text(hjust=1, size = 18),
-          legend.text = element_text(hjust = 1, size = 12))
-
-
-
-vplot_n1n2
-
-### NA Group1 vs neg ### 
-na1_statistical_table$association_n1neg = ifelse(na1_statistical_table$q_na_groupneg < 0.05 & na1_statistical_table$lfc_na_groupneg > 0, "Enriched", "Not significant")
-na1_statistical_table$association_n1neg = ifelse(na1_statistical_table$q_na_groupneg < 0.05 & na1_statistical_table$lfc_na_groupneg < 0, "Depleted",na1_statistical_table$association_n1neg)
-
-vplot_n1neg <- ggplot(na1_statistical_table, aes(x = as.numeric(lfc_na_groupneg), y = -log10(as.numeric(q_na_groupneg)), color = association_n1neg)) +
-  geom_point() +
-  labs(x = "Log2 Fold Change", y = "-log10(p-value)",
-       title = "Volcano Plot N1 vs neg") +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
-  theme_bw()
-
-
-vplot_n1neg
-
-### NA Group2 vs neg ###
-na2_statistical_table$association_n2neg = ifelse(na2_statistical_table$q_na_groupneg < 0.05 & na2_statistical_table$lfc_na_groupneg > 0, "Enriched", "Not significant")
-na2_statistical_table$association_n2neg = ifelse(na2_statistical_table$q_na_groupneg < 0.05 & na2_statistical_table$lfc_na_groupneg < 0, "Depleted", na2_statistical_table$association_n2neg)
-
-vplot_h2neg <- ggplot(na2_statistical_table, aes(x = as.numeric(lfc_na_groupneg), y = -log10(as.numeric(q_na_groupneg)), color = association_n2neg)) +
-  geom_point() +
-  labs(x = "Log2 Fold Change", y = "-log10(p-value)",
-       title = "Volcano Plot N2 vs neg") +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") +
-  theme_bw()
-
-
-vplot_h2neg
-```
-
-## Log2Fold Change Plots
-
-```{r}
-### NA Group 1 vs Neg ###
-df_n1neg = na1_statistical_table %>%
-  left_join(genus_tax, by = "taxon") 
-
-df_fig_n1neg = df_n1neg %>%
-    filter(diff_robust_na_groupneg == T) %>% 
-    mutate(direct = ifelse(lfc_na_groupneg > 0, "Positive LFC", "Negative LFC"),
-                  color = ifelse(passed_ss_na_groupneg == 1, "aquamarine3", "black"),
-                  Genus = reorder(Genus, -lfc_na_groupneg)) 
-
-df_fig_n1neg$direct = factor(df_fig_n1neg$direct, 
-                           levels = c("Positive LFC", "Negative LFC"))
-  
-fig_n1neg = df_fig_n1neg %>%
-    ggplot(aes(x = Genus, y = lfc_na_groupneg, fill = direct)) + 
-    geom_bar(stat = "identity", width = 0.7, color = "black", 
-             position = position_dodge(width = 0.4)) +
-    geom_errorbar(aes(ymin = lfc_na_groupneg - se_na_groupneg, ymax = lfc_na_groupneg + se_na_groupneg), 
-                  width = 0.2, position = position_dodge(0.05), color = "black") + 
-    labs(x = NULL, y = "Log2 Fold Change", 
-         title = "Log2 FC NA Group 1/Uninfected") + 
-    scale_fill_discrete(name = NULL) +
-    scale_color_discrete(name = NULL) +
-    theme_bw() + 
-        theme(plot.title = element_text(hjust = 0.5, size = 30),
-          panel.grid.minor.y = element_blank(),
-          axis.text.x = element_text(angle = 90, hjust = 1, size = 25),
-          axis.title.y = element_text(size = 18),
-          axis.text.y = element_text(hjust=1, size = 18),
-          legend.text = element_text(hjust = 1, size = 12))
-fig_n1neg
-
-### NA Group 2 vs Neg ###
-df_n2neg = na2_statistical_table %>%
-  left_join(genus_tax, by = "taxon") 
-
-df_fig_n2neg = df_n2neg %>%
-    filter(diff_robust_na_groupneg == T) %>% 
-    mutate(direct = ifelse(lfc_na_groupneg > 0, "Positive LFC", "Negative LFC"),
-                  Genus = reorder(Genus, -lfc_na_groupneg))
-
-df_fig_n2neg$direct = factor(df_fig_n2neg$direct, 
-                           levels = c("Positive LFC", "Negative LFC"))
-  
-fig_n2neg = df_fig_n2neg %>%
-    ggplot(aes(x = Genus, y = lfc_na_groupneg, fill = direct)) + 
-    geom_bar(stat = "identity", width = 0.7, color = "black", 
-             position = position_dodge(width = 0.4)) +
-    geom_errorbar(aes(ymin = lfc_na_groupneg - se_na_groupneg, ymax = lfc_na_groupneg + se_na_groupneg), 
-                  width = 0.2, position = position_dodge(0.05), color = "black") + 
-    labs(x = NULL, y = "Log2 Fold Change", 
-         title = "Log2 FC NA Group 2/Uninfected") + 
-    scale_fill_discrete(name = NULL) +
-    scale_color_discrete(name = NULL) +
-    theme_bw() + 
-        theme(plot.title = element_text(hjust = 0.5, size = 30),
-          panel.grid.minor.y = element_blank(),
-          axis.text.x = element_text(angle = 90, hjust = 1, size = 25),
-          axis.title.y = element_text(size = 18),
-          axis.text.y = element_text(hjust= 1, size = 18),
-          legend.text = element_text(hjust = 1, size = 12))
-fig_n2neg
-```
-
-# 
-
-```{r}
-### Volcano Plots ###
-# Graphs with no differnetial abundance ie. NA/NA, HA/HA grouping comparisons
-ggsave("../visualizations/figures/differential_abundance_h1vsh2.png", plot = vplot_h1h2, width = 14, height = 10)
-ggsave("../visualizations/figures/differential_abundance_n1vsn2.png", plot = vplot_n1n2, width = 14, height = 10)
-
-
-### Log2FC Plots ###
-# Graphs with differential abundance ie. comparisons with negative group
-ggsave("../visualizations/figures/differential_abundance_h1vsneg.png", plot = fig_h1neg, width = 18, height = 10)
-ggsave("../visualizations/figures/differential_abundance_h2vsneg.png", plot = fig_h2neg, width = 18, height = 10)
-ggsave("../visualizations/figures/differential_abundance_n1vsneg.png", plot = fig_n1neg, width = 18, height = 10)
-ggsave("../visualizations/figures/differential_abundance_n2vsneg.png", plot = fig_n2neg, width = 18, height = 10)
+ggsave("../visualizations/figures/differential_abundance_na.png", plot = na_paired_heatmap, width = 15, height = 12)
 ```
