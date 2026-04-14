@@ -1,7 +1,7 @@
 ---
 title: "indicator_taxa"
 output: html_document
-creator: "Alex Elbaz"
+author: "Alex Elbaz"
 ---
 
 # Indicator Taxa Analysis
@@ -20,14 +20,126 @@ library(gtable)
 library(grid)
 ```
 
-## 2. Load Data
+## 2. Define Functions
 
 ```{r}
-# Read in phyloseq object
-ps = readRDS('../processed_data/phyloseq_taxonomy.rds')
+# Agglomerate taxa to genus level, convert to relative abundance, & apply relative abundance filter
+# ps: phyloseq object
+# abun_thresh: abundance filter threshold value
+ps_ita_transform = function(ps, abun_thresh = 0.0001) {
+  return(tax_glom(ps, "Genus") %>%
+           microbiome::transform("compositional") %>%
+           filter_taxa(function(x) mean(x) >= abun_thresh, TRUE))
+}
+
+
+# Conduct indicator taxa analysis
+# ps: phyloseq object
+# group: metadata column defining the groups of interest
+ita = function(ps, group) {
+  return(multipatt(t(otu_table(ps)), 
+                   cluster = sample_data(ps)[[group]],
+                   control = how(nperm = 999))$sign %>%
+           as.data.frame(.))
+}
+
+
+# Generate formatted indicator taxa summary table
+# ps: phyloseq object
+# ita_results: data frame containing ita results
+# grp1_name: name for column corresponding to group 1
+# grp2_name: name for column corresponding to group 2
+# uninfected_name: name for column corresponding to uninfected samples (or NULL if no uninfected samples included)
+format_summary_table = function(ps, ita_results, grp1_name = "s.1", grp2_name = "s.2", uninfected_name = NULL) {
+  # Get indicator genera names from indicator genera ASVs
+  indic_genera = data.frame(ps@tax_table) %>%
+    rownames_to_column() %>%
+    filter(rowname %in% rownames(ita_results)) %>%
+    select(rowname, Genus)
+  
+  indic_genera$Genus = indic_genera$Genus %>% str_replace("g__", "")
+  
+  # Generate summary table
+  ita_summary = ita_results %>%
+    rownames_to_column() %>%
+    left_join(indic_genera)
+  
+  # Format summary table for ease of interpretation
+  cols = colnames(ita_summary)
+  
+  if (!is.null(grp1_name)) {
+    cols = replace(cols, cols=="s.1", grp1_name)
+  }
+  
+  if (!is.null(grp2_name)) {
+    cols = replace(cols, cols=="s.2", grp2_name)
+  }
+  
+  if (!is.null(uninfected_name)) {
+    cols = replace(cols, cols=="s.neg", uninfected_name)
+  }
+  
+  ita_summary_formatted = ita_summary %>%
+    `colnames<-`(cols) %>%
+    select(-index, -rowname) %>%
+    relocate(stat, .after = last_col()) %>%
+    relocate(p.value, .before = stat) %>%
+    relocate(Genus, .before = grp1_name) %>%
+    mutate(stat = round(stat, 3)) %>%
+    mutate(p.value = round(p.value, 3)) %>%
+    rename("Indicator Value" = stat, "P Value (Adjusted)" = p.value)
+  
+  # Re-label indicator 0/1 markers with ✘/✔
+  for(col in c(grp1_name, grp2_name, uninfected_name)) {
+    if (!is.null(col)) {
+      ita_summary_formatted[[col]] = replace(ita_summary_formatted[[col]],
+                                             which(1 == ita_summary_formatted[[col]]),
+                                             "✔")
+      ita_summary_formatted[[col]] = replace(ita_summary_formatted[[col]],
+                                             which(0 == ita_summary_formatted[[col]]),
+                                             "✘")
+    }
+  }
+  
+  return(ita_summary_formatted)
+}
+
+
+# Save indicator taxa analysis table formatted appropriately.
+# tbl: indicator taxa results table
+# name: name for the output table file
+save_ita_tbl = function(tbl, name) {
+  # Order table rows consistently prior to exporting the figure
+  tbl = tbl %>% arrange(Genus, desc("Indicator Value"))
+
+  # Export figure
+  cairo_pdf(paste("../visualizations/tables/indicator_taxa/", name, ".pdf", sep = ""))
+  tbl_grob = tableGrob(tbl, theme = ttheme_minimal(base_size = 8), rows = NULL) %>%
+    gtable_add_grob(grobs = segmentsGrob(x0 = unit(0, "npc"),
+                                         y0 = unit(0, "npc"),
+                                         x1 = unit(1, "npc"),
+                                         y1 = unit(0, "npc")),
+                    t = 1, l = 1, b = 1, r = ncol(tbl))
+  grid.newpage()
+  grid.draw(tbl_grob)
+  dev.off()
+}
 ```
 
-## 3. Set Seed & Prepare Data for Analyses
+## 3. Load Data
+
+```{r}
+# Read in phyloseq object; keep all samples
+ps_all = readRDS('../processed_data/phyloseq_taxonomy.rds')
+
+# Read in phyloseq object; remove uninfected samples
+ps_infected = readRDS('../processed_data/phyloseq_taxonomy.rds')
+ps_infected@sam_data = data.frame(ps_infected@sam_data) %>%
+  filter(ha_group != "neg" & na_group != "neg") %>%
+  sample_data(.)
+```
+
+## 4. Set Seed & Prepare Data for Analyses
 
 We deemed it most appropriate to agglomerate to the genus level for this analysis given the level of annotation available in the taxonomy data.
 
@@ -35,138 +147,119 @@ We deemed it most appropriate to agglomerate to the genus level for this analysi
 # Set seed for repeatable analysis
 set.seed(1234)
 
-# Agglomerate taxa to genus level, convert to relative abundance, & apply abundance filter
-ps_filt = tax_glom(ps, "Genus") %>%
-  microbiome::transform("compositional") %>%
-  filter_taxa(function(x) mean(x) >= 0.0001, TRUE)
+# Agglomerate taxa to genus level, convert to relative abundance, & apply relative abundance filter of 0.0001
+ps_filt_all = ps_ita_transform(ps_all, 0.0001)
+ps_filt_infected = ps_ita_transform(ps_infected, 0.0001)
 ```
 
-## 4. Conduct Indicator Taxa Analysis (via indicpecies package)
-
-An indicator value of \> 0.7 and p-value of \< 0.05 were considered as the thresholds for significance.
+## 5. Conduct Indicator Taxa Analysis (via indicpecies package)
 
 ```{r}
-# Conduct indicator taxa analysis by HA group & filter results for stat & p-value cutoffs
-ita_ha = multipatt(t(otu_table(ps_filt)), 
-                       cluster = sample_data(ps_filt)$ha_group,
-                       control = how(nperm = 999))$sign %>%
-  as.data.frame(.) %>%
-  filter(stat > 0.7 & p.value < 0.05)
+# HA Groups including uninfected samples
+ita_ha_all = ita(ps_filt_all, "ha_group")
 
-# Conduct indicator taxa analysis by NA group & filter results for stat & p-value cutoffs
-ita_na = multipatt(t(otu_table(ps_filt)), 
-                       cluster = sample_data(ps_filt)$na_group,
-                       control = how(nperm = 999))$sign %>%
-  as.data.frame(.) %>%
-  filter(stat > 0.7 & p.value < 0.05)
+# NA Groups including uninfected samples
+ita_na_all = ita(ps_filt_all, "na_group")
+
+# HA Groups without uninfected samples
+ita_ha_infected = ita(ps_filt_infected, "ha_group") 
+  
+# NA Groups without uninfected samples
+ita_na_infected = ita(ps_filt_infected, "na_group")
 ```
 
-## 5. Generate Indicator Taxa Summary Tables for HA & NA Analyses
+## 6. Adjust P Values for Multiple Comparisons
 
-The tables are organized such that each row corresponds to an indicator genus. The values of the columns "HA Group 1", "HA Group 2", "NA Group 1", "NA Group 2", and "Uninfected" represent whether the given genus is an indicator for that group (✔) or not (✘). Additionally, the tables are filtered to only include significant results (p \< 0.05 & stat \> 0.7).
+There is no indication that the multipatt() function adjusts p-values to account for multiple comparisons. Additionally, two statistical analyses were conducted for each set of unique data (i.e., two using HA group data and two using NA group data). Hence, a p-value adjustment (Benjamini-Hochberg procedure) will be applied to adjust the p-values for both sets of comparisons.
 
-### 5.1 HA Group Table
+### 5.1 HA Analyses p-adjustment
 
 ```{r}
-# Get indicator genera names from indicator genera ASVs
-indicator_genera_ha = data.frame(ps_filt@tax_table) %>%
-  rownames_to_column() %>%
-  filter(rowname %in% rownames(ita_ha)) %>%
-  select(rowname, Genus)
-indicator_genera_ha$Genus = indicator_genera_ha$Genus %>% str_replace("g__", "")
-
-# Generate summary table
-ita_summary_ha = ita_ha %>%
-  rownames_to_column() %>%
-  left_join(indicator_genera_ha)
-
-# Format summary table for ease of interpretation
-ita_summary_ha_formatted = ita_summary_ha %>%
-  rename("HA Group 1" = "s.1", "HA Group 2" = "s.2", "Uninfected" = "s.neg") %>%
-  select(-index, -rowname) %>%
-  relocate(stat, .after = last_col()) %>%
-  relocate(p.value, .before = stat) %>%
-  relocate(Genus, .before = "HA Group 1") %>%
-  mutate(stat = round(stat, 3)) %>%
-  rename("Indicator Value" = stat, "P value" = p.value)
-
-# Re-label indicator 0/1 markers with ✘/✔
-for(col in colnames(ita_summary_ha_formatted[,2:4])) {
-  ita_summary_ha_formatted[, col] = replace(ita_summary_ha_formatted[, col],
-                                            which(1 == ita_summary_ha_formatted[, col]),
-                                            "✔")
-  ita_summary_ha_formatted[, col] = replace(ita_summary_ha_formatted[, col],
-                                            which(0 == ita_summary_ha_formatted[, col]),
-                                            "✘")
-}
-
-# Display formatted summary table
-ita_summary_ha_formatted
+num_ha_comparisons = length(ita_ha_all$p.value) + length(ita_ha_infected$p.value)
+ita_ha_all$p.value = p.adjust(ita_ha_all$p.value, method = "BH", n = num_ha_comparisons)
+ita_ha_infected$p.value = p.adjust(ita_ha_infected$p.value, method = "BH", n = num_ha_comparisons)
 ```
 
-### 5.2 NA Group Table
+### 5.2 NA Analyses p-adjustment
 
 ```{r}
-# Get indicator genera names from indicator genera ASVs
-indicator_genera_na = data.frame(ps_filt@tax_table) %>%
-  rownames_to_column() %>%
-  filter(rowname %in% rownames(ita_na)) %>%
-  select(rowname, Genus)
-indicator_genera_na$Genus = indicator_genera_na$Genus %>% str_replace("g__", "")
-
-# Generate summary table
-ita_summary_na = ita_na %>%
-  rownames_to_column() %>%
-  left_join(indicator_genera_na)
-
-# Format summary table for ease of interpretation
-ita_summary_na_formatted = ita_summary_na %>%
-  rename("NA Group 1" = "s.1", "NA Group 2" = "s.2", "Uninfected" = "s.neg") %>%
-  select(-index, -rowname) %>%
-  relocate(stat, .after = last_col()) %>%
-  relocate(p.value, .before = stat) %>%
-  relocate(Genus, .before = "NA Group 1") %>%
-  mutate(stat = round(stat, 3)) %>%
-  rename("Indicator Value" = stat, "P value" = p.value)
-
-# Re-label indicator 0/1 markers with ✘/✔
-for(col in colnames(ita_summary_na_formatted[,2:4])) {
-  ita_summary_na_formatted[, col] = replace(ita_summary_na_formatted[, col],
-                                            which(1 == ita_summary_na_formatted[, col]),
-                                            "✔")
-  ita_summary_na_formatted[, col] = replace(ita_summary_na_formatted[, col],
-                                            which(0 == ita_summary_na_formatted[, col]),
-                                            "✘")
-}
-
-# Display formatted summary table
-ita_summary_na_formatted
+num_na_comparisons = length(ita_na_all$p.value) + length(ita_na_infected$p.value)
+ita_na_all$p.value = p.adjust(ita_na_all$p.value, method = "BH", n = num_na_comparisons)
+ita_na_infected$p.value = p.adjust(ita_na_infected$p.value, method = "BH", n = num_na_comparisons)
 ```
 
-### 5.3 Save HA & NA Tables
+## 7. Remove NAs & Filter for Significant Results
+
+Notably, the threshold used to establish significance was adjusted p \< 0.05 and indicator value \> 0.7.
 
 ```{r}
-# HA Table
-cairo_pdf("../visualizations/tables/ita_ha_summary.pdf")
-ha_g = tableGrob(ita_summary_ha_formatted, theme = ttheme_minimal(base_size = 8), rows = NULL)
-ha_g = gtable_add_grob(ha_g, grobs = segmentsGrob(x0 = unit(0, "npc"),
-                                            y0 = unit(0, "npc"),
-                                            x1 = unit(1, "npc"),
-                                            y1 = unit(0, "npc")),
-                    t = 1, l = 1, b = 1, r = ncol(ha_g))
-grid.newpage()
-grid.draw(ha_g)
-dev.off()
+ita_ha_all = na.omit(ita_ha_all)
+ita_ha_infected = na.omit(ita_ha_infected)
+ita_na_all = na.omit(ita_na_all)
+ita_na_infected = na.omit(ita_na_infected)
 
-# NA Table
-cairo_pdf("../visualizations/tables/ita_na_summary.pdf")
-na_g = tableGrob(ita_summary_na_formatted, theme = ttheme_minimal(base_size = 8), rows = NULL)
-na_g = gtable_add_grob(na_g, grobs = segmentsGrob(x0 = unit(0, "npc"),
-                                            y0 = unit(0, "npc"),
-                                            x1 = unit(1, "npc"),
-                                            y1 = unit(0, "npc")),
-                    t = 1, l = 1, b = 1, r = ncol(na_g))
-grid.newpage()
-grid.draw(na_g)
-dev.off()
+ita_ha_all_significant = ita_ha_all %>% filter(p.value < 0.05 & stat > 0.7)
+ita_ha_infected_significant = ita_ha_infected %>% filter(p.value < 0.05 & stat > 0.7)
+ita_na_all_significant = ita_na_all %>% filter(p.value < 0.05 & stat > 0.7)
+ita_na_infected_significant = ita_na_infected %>% filter(p.value < 0.05 & stat > 0.7)
+```
+
+## 8. Generate Indicator Taxa Summary Tables
+
+The tables are organized such that each row corresponds to an indicator genus. The values of the columns "HA Group 1", "HA Group 2", "NA Group 1", "NA Group 2", and "Uninfected" represent whether the given genus is an indicator for that group (✔) or not (✘).
+
+Importantly, for HA & NA analyses including uninfected samples, only significant taxa are included to produce a readable figure (stat \> 0.7 & adjusted p \< 0.05).
+
+Conversely, there were **NO** significant indicator taxa found for HA & NA analyses without uninfected samples, so the top 10 most significant taxa are shown in the respective tables; uncultured taxa are excluded.
+
+```{r}
+# HA Groups including uninfected samples; ONLY SIGNIFICANT INDICATOR TAXA
+ita_ha_all_tbl = format_summary_table(ps_filt_all,
+                                      ita_ha_all_significant,
+                                      grp1_name = "HA Group 1",
+                                      grp2_name = "HA Group 2",
+                                      uninfected_name = "Uninfected")
+
+# NA Groups including uninfected samples; ONLY SIGNIFICANT INDICATOR TAXA
+ita_na_all_tbl = format_summary_table(ps_filt_all,
+                                      ita_na_all_significant,
+                                      grp1_name = "NA Group 1",
+                                      grp2_name = "NA Group 2",
+                                      uninfected_name = "Uninfected")
+
+# HA Groups without uninfected samples; TOP 10 MOST SIGNIFICANT INDICATOR TAXA (none actually significant)
+ita_ha_infected_tbl = format_summary_table(ps_filt_infected,
+                                      ita_ha_infected,
+                                      grp1_name = "HA Group 1",
+                                      grp2_name = "HA Group 2",
+                                      uninfected_name = NULL) %>%
+  filter(Genus != "uncultured") %>%
+  arrange("P Value", desc("Indicator Value")) %>%
+  head(n = 10)
+
+# NA Groups without uninfected samples; TOP 10 MOST SIGNIFICANT INDICATOR TAXA (none actually significant)
+ita_na_infected_tbl = format_summary_table(ps_filt_infected,
+                                      ita_na_infected,
+                                      grp1_name = "NA Group 1",
+                                      grp2_name = "NA Group 2",
+                                      uninfected_name = NULL) %>%
+  filter(Genus != "uncultured") %>%
+  arrange("P Value", desc("Indicator Value")) %>%
+  head(n = 10)
+```
+
+## 9. Save Tables
+
+```{r}
+# HA Groups including uninfected samples
+save_ita_tbl(ita_ha_all_tbl, "ha_all")
+
+# NA Groups including uninfected samples
+save_ita_tbl(ita_na_all_tbl, "na_all")
+
+# HA Groups without uninfected samples
+save_ita_tbl(ita_ha_infected_tbl, "ha_infected")
+  
+# NA Groups without uninfected samples
+save_ita_tbl(ita_na_infected_tbl, "na_infected")
 ```

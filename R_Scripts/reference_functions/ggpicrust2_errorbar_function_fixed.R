@@ -76,7 +76,7 @@ pathway_errorbar_fixed = function (abundance, daa_results_df, Group, ko_to_kegg 
     message("The 'group1' or 'group2' column in the 'daa_results_df' data frame contains more than one group. Please filter each to contain only one group.")
   }
   if (is.null(colors)) {
-    colors <- c("#d93c3e", "#3685bc", "#6faa3e", "#e8a825", 
+    colors <- c("#FF6666", "#6666DD", "#6faa3e", "#e8a825", 
                 "#c973e6", "#ee6b3d", "#2db0a7", "#f25292")[1:nlevels(as.factor(Group))]
   }
   errorbar_abundance_mat <- as.matrix(abundance)
@@ -184,8 +184,8 @@ pathway_errorbar_fixed = function (abundance, daa_results_df, Group, ko_to_kegg 
                            width = 0.5, size = 0.5, color = "black") + 
     ggplot2::geom_bar(stat = "identity", 
                                                                                                                                                                  position = ggplot2::position_dodge(width = 0.8), width = 0.8) + 
-    GGally::geom_stripped_cols(width = 10) + ggplot2::scale_fill_manual(values = colors) + 
-    ggplot2::scale_color_manual(values = colors) + ggprism::theme_prism() + 
+    GGally::geom_stripped_cols(width = 10) + ggplot2::scale_fill_manual(values = colors, na.value = "white") + 
+    ggplot2::scale_color_manual(values = colors, na.value = "white") + ggprism::theme_prism() + 
     ggplot2::scale_x_continuous(expand = c(0, 0))+ #, guide = "prism_offset_minor") + 
     ggplot2::scale_y_discrete(labels = rev(daa_results_filtered_sub_df[, x_lab])) + 
     ggplot2::labs(x = "Relative Abundance", y = NULL) + 
@@ -252,7 +252,7 @@ pathway_errorbar_fixed = function (abundance, daa_results_df, Group, ko_to_kegg 
     ggplot2::ggplot(ggplot2::aes(feature, log_2_fold_change, fill = group_nonsense)) + 
     ggplot2::geom_bar(stat = "identity", position = ggplot2::position_dodge(width = 0.8), width = 0.8) + 
     ggplot2::labs(y = "Log2 Fold Change", x = NULL) + GGally::geom_stripped_cols() + 
-    ggplot2::scale_fill_manual(values = "#87ceeb") + ggplot2::scale_color_manual(values = "#87ceeb") + 
+    ggplot2::scale_fill_manual(values = "#87ceeb", na.value = "white") + ggplot2::scale_color_manual(values = "#87ceeb") + 
     ggplot2::geom_hline(ggplot2::aes(yintercept = 0), linetype = "dashed", 
                         color = "black") + 
     ggprism::theme_prism() +
