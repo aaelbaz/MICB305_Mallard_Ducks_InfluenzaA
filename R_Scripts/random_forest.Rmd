@@ -67,17 +67,17 @@ vsurf_df_transformed <- vsurf_df_transformed |>
 vsurf_df_transformed$Genus = vsurf_df_transformed$Genus %>% str_replace("g__", "")
 
 
- vsurf_df_pivot_ha <- vsurf_df_transformed |>
-   select(Sample, ha_group, Genus, Abundance) |>
-   pivot_wider(names_from = Genus, values_from = Abundance)|>
-   filter(ha_group != "neg")|>
-   select(-Sample)
+ # vsurf_df_pivot_ha <- vsurf_df_transformed |>
+ #   select(Sample, ha_group, Genus, Abundance) |>
+ #   pivot_wider(names_from = Genus, values_from = Abundance)|>
+ #   filter(ha_group != "neg")|>
+ #   select(-Sample)
 
-# vsurf_df_pivot_na = vsurf_df_transformed |>
-#   select(Sample, na_group, Genus, Abundance) |>
-#   pivot_wider(names_from = Genus, values_from = Abundance)|>
-#   filter(na_group != "neg")|>
-#   select(-Sample)
+vsurf_df_pivot_na = vsurf_df_transformed |>
+  select(Sample, na_group, Genus, Abundance) |>
+  pivot_wider(names_from = Genus, values_from = Abundance)|>
+  filter(na_group != "neg")|>
+  select(-Sample)
 
 
 
@@ -88,22 +88,22 @@ vsurf_df_transformed$Genus = vsurf_df_transformed$Genus %>% str_replace("g__", "
 
 ```{r}
 
-ha_prepped_rf_df <- vsurf_df_pivot_ha |>
-  na.omit()|>
-  filter(ha_group != "neg")|>
-  mutate(ha_group = case_when(ha_group == 1 ~ "one", ha_group == 2 ~ "two"))|>
-  mutate(ha_group = as.factor(ha_group))
+# ha_prepped_rf_df <- vsurf_df_pivot_ha |>
+#   na.omit()|>
+#   filter(ha_group != "neg")|>
+#   mutate(ha_group = case_when(ha_group == 1 ~ "one", ha_group == 2 ~ "two"))|>
+#   mutate(ha_group = as.factor(ha_group))
 
 ```
 ## Prepping our NA df for RF:
 
 ```{r}
 
-# na_prepped_rf_df <- vsurf_df_pivot_na |>
-#   na.omit()|>
-#   filter(na_group != "neg")|>
-#   mutate(na_group = case_when(na_group == 1 ~ "one", na_group == 2 ~ "two"))|>
-#   mutate(na_group = as.factor(na_group))
+na_prepped_rf_df <- vsurf_df_pivot_na |>
+  na.omit()|>
+  filter(na_group != "neg")|>
+  mutate(na_group = case_when(na_group == 1 ~ "one", na_group == 2 ~ "two"))|>
+  mutate(na_group = as.factor(na_group))
 # # 
 ```
 # 
@@ -116,43 +116,43 @@ ha_prepped_rf_df <- vsurf_df_pivot_ha |>
 
 ## HA RF
 
-predictors_ha <- ha_prepped_rf_df|>
-  select(-ha_group)
-
-outcome_ha = ha_prepped_rf_df|>
-  pull(ha_group)
-
-k = 10
-folds = createFolds(outcome_ha, k=k, list = TRUE)
-
-tune_grid = expand.grid(mtry = c(7, 15, 20), splitrule = c(
-"gini"), min.node.size = c(10,25,50))
-
-source("reference_functions/randomforest_functions.R")
-
-## Using Avril's Code from MICB 305 repository
-
-pd_model = run_rf(X= predictors_ha, y = outcome_ha, fold_list = folds, hyper = tune_grid, rngseed = 421)
-
-## NA RF
-
-# predictors_na <- na_prepped_rf_df|>
-#   select(-na_group)
+# predictors_ha <- ha_prepped_rf_df|>
+#   select(-ha_group)
 # 
-# outcome_na = na_prepped_rf_df|>
-#   pull(na_group)
+# outcome_ha = ha_prepped_rf_df|>
+#   pull(ha_group)
 # 
 # k = 10
-# folds = createFolds(outcome_na, k=k, list = TRUE)
+# folds = createFolds(outcome_ha, k=k, list = TRUE)
 # 
 # tune_grid = expand.grid(mtry = c(7, 15, 20), splitrule = c(
-#   "gini"), min.node.size = c(10,25,50))
+# "gini"), min.node.size = c(10,25,50))
 # 
 # source("reference_functions/randomforest_functions.R")
 # 
 # ## Using Avril's Code from MICB 305 repository
 # 
-# pd_model = run_rf(X= predictors_na, y = outcome_na, fold_list = folds, hyper = tune_grid, rngseed = 421)
+# pd_model = run_rf(X= predictors_ha, y = outcome_ha, fold_list = folds, hyper = tune_grid, rngseed = 421)
+
+## NA RF
+
+predictors_na <- na_prepped_rf_df|>
+  select(-na_group)
+
+outcome_na = na_prepped_rf_df|>
+  pull(na_group)
+
+k = 10
+folds = createFolds(outcome_na, k=k, list = TRUE)
+
+tune_grid = expand.grid(mtry = c(7, 15, 20), splitrule = c(
+  "gini"), min.node.size = c(10,25,50))
+
+source("reference_functions/randomforest_functions.R")
+
+## Using Avril's Code from MICB 305 repository
+
+pd_model = run_rf(X= predictors_na, y = outcome_na, fold_list = folds, hyper = tune_grid, rngseed = 421)
 
 ```
 
@@ -177,28 +177,7 @@ roc_data = data.frame(Dataset = 'df',
 #### HA SPECIFIC
 
 
-ha_auc <- ggplot() +
-  geom_line(aes(x = 1 - roc_train$specificities,
-                y = roc_train$sensitivities),
-            color = "red",size=1) +
-  geom_line(aes(x = 1 - roc_test$specificities,
-                y = roc_test$sensitivities),
-            color = "black",size=1) +
-  geom_abline(slope = 1, intercept = 0, color = "gray", linetype = "dashed",size=1) +
-  labs(x = "", y = "") +
-  annotate("text", x = 0.7, y = 0.2,
-           label = sprintf("Train (red): %.2f (%.2f-%.2f)\nTest (black): %.2f (%.2f-%.2f)",
-           auc(roc_train), pd_model$auc_train_ci[1], pd_model$auc_train_ci[2],
-           auc(roc_test), pd_model$auc_test_ci[1], pd_model$auc_test_ci[2]),
-           size = 12) +
-  theme_minimal(base_size=24)
-
-ha_auc
-
-
-#### NA SPECIFIC
-
-# na_auc <- ggplot() +
+# ha_auc <- ggplot() +
 #   geom_line(aes(x = 1 - roc_train$specificities,
 #                 y = roc_train$sensitivities),
 #             color = "red",size=1) +
@@ -214,7 +193,28 @@ ha_auc
 #            size = 12) +
 #   theme_minimal(base_size=24)
 # 
-# na_auc
+# ha_auc
+
+
+#### NA SPECIFIC
+
+na_auc <- ggplot() +
+  geom_line(aes(x = 1 - roc_train$specificities,
+                y = roc_train$sensitivities),
+            color = "red",size=1) +
+  geom_line(aes(x = 1 - roc_test$specificities,
+                y = roc_test$sensitivities),
+            color = "black",size=1) +
+  geom_abline(slope = 1, intercept = 0, color = "gray", linetype = "dashed",size=1) +
+  labs(x = "", y = "") +
+  annotate("text", x = 0.7, y = 0.2,
+           label = sprintf("Train (red): %.2f (%.2f-%.2f)\nTest (black): %.2f (%.2f-%.2f)",
+           auc(roc_train), pd_model$auc_train_ci[1], pd_model$auc_train_ci[2],
+           auc(roc_test), pd_model$auc_test_ci[1], pd_model$auc_test_ci[2]),
+           size = 12) +
+  theme_minimal(base_size=24)
+
+na_auc
 
 
 ```
@@ -224,47 +224,10 @@ ha_auc
 
 ## NA graphs
 
-# pd_model$importance <- pd_model$importance |>
-#    filter(MeanDecreaseGini >= .6)
-# 
-# na_rf_importance_graph <- pd_model$importance %>%
-#   mutate(Feature = factor(.$Feature,levels = .$Feature)) %>%
-#   ggplot(aes(Feature,MeanDecreaseGini,fill=MeanDecreaseGini)) +
-#   geom_col() +
-#   theme_classic(base_size=28) +
-#   theme(axis.text.x = element_text(angle=45, vjust = 1, hjust=1)) +
-#   ylab('Importance (Gini)') + xlab(NULL)
-# 
-# na_rf_importance_graph
-# 
-# temp = ps_clr %>%
-#   subset_taxa(Genus==" g__Candidatus_Arthromitus") %>%
-#   psmelt()
-# 
-# temp <- temp |>
-#   filter(na_group != "neg")
-# 
-# wilcox.test(Abundance ~ na_group, data = temp)
-# 
-# candidatus_graph = temp %>% ggplot(aes(na_group,Abundance, fill = temp$na_group)) +
-#   geom_boxplot(outlier.shape = NA, ) +
-#   geom_jitter(height=0, width = 0.25, alpha = .2) +
-#   theme_classic(base_size=16) +
-#   geom_signif(comparisons = list(c("1", "2")), map_signif_level = TRUE, textsize = 6)+
-#   labs(x = "NA group", y = "CLR-Transformed Abundance") +
-#   theme(axis.title.x = element_text(size = 24),
-#         axis.title.y = element_text(size = 24),
-#         axis.text = element_text(size = 24))+
-#   ylim(-3, 15)
-# 
-# candidatus_graph
-
-## HA Graph
-
 pd_model$importance <- pd_model$importance |>
-    filter(MeanDecreaseGini >= .6)
+   filter(MeanDecreaseGini >= .6)
 
-ha_rf_importance_graph <- pd_model$importance %>%
+na_rf_importance_graph <- pd_model$importance %>%
   mutate(Feature = factor(.$Feature,levels = .$Feature)) %>%
   ggplot(aes(Feature,MeanDecreaseGini,fill=MeanDecreaseGini)) +
   geom_col() +
@@ -272,29 +235,66 @@ ha_rf_importance_graph <- pd_model$importance %>%
   theme(axis.text.x = element_text(angle=90, vjust = 1, hjust=1)) +
   ylab('Importance (Gini)') + xlab(NULL)
 
-ha_rf_importance_graph
+na_rf_importance_graph
 
 temp = ps_clr %>%
-  subset_taxa(Genus==" g__Bacteroides") %>%
+  subset_taxa(Genus==" g__Candidatus_Arthromitus") %>%
   psmelt()
 
 temp <- temp |>
   filter(na_group != "neg")
 
-wilcox.test(Abundance ~ ha_group, data = temp)
+wilcox.test(Abundance ~ na_group, data = temp)
 
-bacteroides_graph = temp %>% ggplot(aes(ha_group,Abundance, fill = temp$ha_group)) +
-  geom_boxplot(outlier.shape = NA) +
+candidatus_graph = temp %>% ggplot(aes(na_group,Abundance, fill = temp$na_group)) +
+  geom_boxplot(outlier.shape = NA, ) +
   geom_jitter(height=0, width = 0.25, alpha = .2) +
   theme_classic(base_size=16) +
   geom_signif(comparisons = list(c("1", "2")), map_signif_level = TRUE, textsize = 6)+
-  labs(x = "HA group", y = "CLR-Transformed Abundance") +
+  labs(x = "NA group", y = "CLR-Transformed Abundance") +
   theme(axis.title.x = element_text(size = 24),
         axis.title.y = element_text(size = 24),
         axis.text = element_text(size = 24))+
   ylim(-3, 15)
 
-bacteroides_graph
+candidatus_graph
+
+## HA Graph
+
+# pd_model$importance <- pd_model$importance |>
+#     filter(MeanDecreaseGini >= .6)
+# 
+# ha_rf_importance_graph <- pd_model$importance %>%
+#   mutate(Feature = factor(.$Feature,levels = .$Feature)) %>%
+#   ggplot(aes(Feature,MeanDecreaseGini,fill=MeanDecreaseGini)) +
+#   geom_col() +
+#   theme_classic(base_size=28) +
+#   theme(axis.text.x = element_text(angle=90, vjust = 1, hjust=1)) +
+#   ylab('Importance (Gini)') + xlab(NULL)
+# 
+# ha_rf_importance_graph
+# 
+# temp = ps_clr %>%
+#   subset_taxa(Genus==" g__Bacteroides") %>%
+#   psmelt()
+# 
+# temp <- temp |>
+#   filter(na_group != "neg")
+# 
+# wilcox.test(Abundance ~ ha_group, data = temp)
+# 
+# bacteroides_graph = temp %>% ggplot(aes(ha_group,Abundance, fill = temp$ha_group)) +
+#   geom_boxplot(outlier.shape = NA) +
+#   geom_jitter(height=0, width = 0.25, alpha = .2) +
+#   theme_classic(base_size=16) +
+#   geom_signif(comparisons = list(c("1", "2")), map_signif_level = TRUE, textsize = 6)+
+#   labs(x = "HA group", y = "CLR-Transformed Abundance") +
+#   theme(axis.title.x = element_text(size = 24),
+#         axis.title.y = element_text(size = 24),
+#         axis.text = element_text(size = 24))+
+#   ylim(-3, 15)
+# 
+# bacteroides_graph
 
 
 
@@ -303,14 +303,14 @@ bacteroides_graph
 
 ## Saving our graphs
 ```{r}
+# 
+# ggsave("../visualizations/figures/ha_randomforest_auc.png", plot = ha_auc, width = 18, height = 10)
+# ggsave("../visualizations/figures/ha_randomforest_importance.png", plot = ha_rf_importance_graph, width = 18, height = 10)
+# ggsave("../visualizations/figures/ha_randomforest_bacteriodes.png", plot = bacteroides_graph, width = 18, height = 10)
 
-ggsave("../visualizations/figures/ha_randomforest_auc.png", plot = ha_auc, width = 18, height = 10)
-ggsave("../visualizations/figures/ha_randomforest_importance.png", plot = ha_rf_importance_graph, width = 18, height = 10)
-ggsave("../visualizations/figures/ha_randomforest_bacteriodes.png", plot = bacteroides_graph, width = 18, height = 10)
-
-# ggsave("../visualizations/figures/na_randomforest_auc.png", plot = na_auc, width = 18, height = 10)
-# ggsave("../visualizations/figures/na_randomforest_importance.png", plot = na_rf_importance_graph, width = 18, height = 10)
-# ggsave("../visualizations/figures/na_randomforest_candidatus.png", plot = candidatus_graph, width = 18, height = 10)
+ggsave("../visualizations/figures/na_randomforest_auc.png", plot = na_auc, width = 18, height = 10)
+ggsave("../visualizations/figures/na_randomforest_importance.png", plot = na_rf_importance_graph, width = 18, height = 10)
+ggsave("../visualizations/figures/na_randomforest_candidatus.png", plot = candidatus_graph, width = 18, height = 10)
 
 
 
