@@ -261,6 +261,9 @@ ha_auc
 
 ## HA Graph
 
+pd_model$importance <- pd_model$importance |>
+    filter(MeanDecreaseGini >= .6)
+
 ha_rf_importance_graph <- pd_model$importance %>%
   mutate(Feature = factor(.$Feature,levels = .$Feature)) %>%
   ggplot(aes(Feature,MeanDecreaseGini,fill=MeanDecreaseGini)) +
