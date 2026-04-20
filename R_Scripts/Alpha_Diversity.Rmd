@@ -52,11 +52,6 @@ Statistical analysis of the shannon diversity metric between subtypes.
 df <- data.frame(HA_NA = as.factor(pdata$HA_NA), value = pdata$value)
 #Kruskal-Wallis and Dunn's test as post-hoc
 res_sig <-dunn.test(df$value, df$HA_NA, kw=TRUE, method = "bh")
-
-results_df <- data.frame(
-  subtype_comparison = res_sig$comparisons,
-  p_adjusted = res_sig$P.adjusted
-)
 ```
 ## NA Not Aggregated ##
 Shannon diversity calculation but grouped by NA subtype. 
@@ -75,11 +70,6 @@ df_NA_shannon <- data.frame(na_subtype = as.factor(pdata_NA_shannon$na_subtype),
 #Kruskal-Wallis and Dunn's test as post-hoc
 res_sig_NA <-dunn.test(df_NA_shannon$value, df_NA_shannon$na_subtype, kw=TRUE,
                     method = "bh")
-
-results_df_NA <- data.frame(
-  subtype_comparison = res_sig_NA$comparisons,
-  p_adjusted = res_sig_NA$P.adjusted
-)
 ```
 ## HA Not Aggregated ##
 Shannon diversity calculation but grouped by HA subtype. 
@@ -97,11 +87,6 @@ df_HA_shannon <- data.frame(ha_subtype = as.factor(pdata_HA_shannon$ha_subtype),
 #Kruskal-Wallis and Dunn's test as post-hoc
 res_sig_HA <-dunn.test(df_HA_shannon$value, df_HA_shannon$ha_subtype, kw=TRUE,
                     method = "bh")
-
-results_df_HA <- data.frame(
-  subtype_comparison = res_sig_HA$comparisons,
-  p_adjusted = res_sig_HA$P.adjusted
-)
 ```
 ## NA Subtype Aggregated ##
 Shannon diversity calculation but grouped by NA subtype with aggregated 
@@ -113,16 +98,6 @@ p_NA_aggr_shannon = plot_richness(psrare, x="na_aggr",
                   color= "na_aggr")
 
 pdata_NA_aggr_shannon = p_NA_aggr_shannon$data
-
-p_formatted_NA_aggr = pdata_NA_aggr_shannon %>% ggplot(aes(na_aggr,value, fill = na_aggr)) +
-  geom_boxplot(outlier.shape = NA, alpha = 0.6) +
-  geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
-theme_classic(base_size=16)+
-  ylab("Shannon Diversity") + xlab(NULL) +
-  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12)) +
-  labs(fill= "na_aggr")
-p_formatted_NA_aggr
-
 ```
 Statistical analysis of the shannon diversity metric between NA aggregated 
 subtypes
@@ -142,16 +117,6 @@ p_HA_aggr_shannon = plot_richness(psrare, x="ha_aggr",
                   color= "ha_aggr")
 
 pdata_HA_aggr_shannon = p_HA_aggr_shannon$data
-
-p_formatted_HA_aggr = pdata_HA_aggr_shannon %>% ggplot(aes(ha_aggr,value, fill = ha_aggr)) +
-  geom_boxplot(outlier.shape = NA, alpha = 0.6) +
-  geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
-theme_classic(base_size=16)+
-  ylab("Shannon Diversity") + xlab(NULL) +
-  theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=12)) +
-  labs(fill= "ha_aggr")
-p_formatted_HA_aggr
-
 ```
 Statistical analysis of the shannon diversity metric between HA aggregated 
 subtypes
@@ -198,8 +163,6 @@ groups
 df_HA_group_shannon <- data.frame(ha_group = as.factor(pdata_HA_group_shannon$ha_group), value = pdata_HA_group_shannon$value)
 #Kruskal-Wallis and Dunn's test as post-hoc
 res_sig_group_HA <-dunn.test(df_HA_group_shannon$value, df_HA_group_shannon$ha_group, kw=TRUE, method = "bh")
-
-view(res_sig_group_HA)
 
 #Two significant groups
 
@@ -252,8 +215,6 @@ groups
 df_NA_group_shannon <- data.frame(na_group = as.factor(pdata_NA_group_shannon$na_group), value = pdata_NA_group_shannon$value)
 #Kruskal-Wallis and Dunn's test as post-hoc
 res_sig_group_NA <-dunn.test(df_NA_group_shannon$value, df_NA_group_shannon$na_group, kw=TRUE, method = "bh")
-
-view(res_sig_group_NA)
 ```
 Generating a boxplot with significance bars. 
 ```{r}
@@ -302,7 +263,6 @@ metadata_rarefied = data.frame(sample_data(psrare))
 
 faith_metadata = merge(metadata_rarefied, faith, by= "row.names")
 
-view(faith_metadata)
 
 
 
@@ -377,7 +337,6 @@ faith_HA_group_df <- data.frame(ha_group = as.factor(faith_metadata$ha_group),
                                                  value = faith_metadata$PD)
 faith_HA_group_sig <- dunn.test(faith_HA_group_df$value, faith_HA_group_df$ha_group, kw=TRUE, method = "bh")
 
-view(faith_HA_group_sig)
 ```
 Significant comparisons mapped onto the initial boxplot.
 ```{r}
