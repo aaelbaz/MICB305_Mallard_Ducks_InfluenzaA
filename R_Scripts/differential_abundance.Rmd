@@ -105,10 +105,6 @@ ha_plot_df$group = factor(ha_plot_df$group,
                                      "Negative - HA Group 2"))
 ```
 
-```{r}
-
-```
-
 # NA Grouping Comparison
 
 ```{r}
