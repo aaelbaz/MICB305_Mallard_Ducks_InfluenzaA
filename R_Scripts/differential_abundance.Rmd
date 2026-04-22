@@ -204,7 +204,7 @@ ha_paired_heatmap = ha_plot_df %>%
           legend.text = element_text(hjust = 1, size = 20),
           legend.title = element_text(size = 20)) +
   guides(fill = guide_colorbar(
-        title = "Log2-Fold Change",
+        title = "Log2 Fold Change",
         title.hjust = 0.5,
         title.position = "top",
         barheight = unit(15, "cm"),
@@ -227,7 +227,7 @@ na_paired_heatmap = na_plot_df %>%
           legend.text = element_text(hjust = 1, size = 20),
          legend.title = element_text(size = 20)) +
   guides(fill = guide_colorbar(
-        title = "Log2-Fold Change",
+        title = "Log2 Fold Change",
         title.hjust = 0.5,
         title.position = "top",
         barheight = unit(15, "cm"),
