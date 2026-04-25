@@ -96,13 +96,13 @@ left_join(genera_ha, by = "taxon")
 
 # labelling grouping comparison names accordingly 
 ha_plot_df$group = recode(ha_plot_df$group, 
-                          `lfc1` = "HA Group 2 - HA Group 1",
-                          `lfc2` = "Negative - HA Group 1",
-                          `lfc3` = "Negative - HA Group 2")
+                          `lfc1` = "HA Group 2/HA Group 1",
+                          `lfc2` = "Negative/HA Group 1",
+                          `lfc3` = "Negative/HA Group 2")
 ha_plot_df$group = factor(ha_plot_df$group, 
-                          levels = c("HA Group 2 - HA Group 1",
-                                     "Negative - HA Group 1", 
-                                     "Negative - HA Group 2"))
+                          levels = c("HA Group 2/HA Group 1",
+                                     "Negative/HA Group 1", 
+                                     "Negative/HA Group 2"))
 ```
 
 # NA Grouping Comparison
@@ -169,13 +169,13 @@ na_plot_df <- na_lfc %>%
 
 # labelling grouping comparison names accordingly 
 na_plot_df$group = recode(na_plot_df$group, 
-                          `lfc1` = "NA Group 2 - NA Group 1",
-                          `lfc2` = "Negative - NA Group 1",
-                          `lfc3` = "Negative - NA Group 2")
+                          `lfc1` = "NA Group 2/NA Group 1",
+                          `lfc2` = "Negative/NA Group 1",
+                          `lfc3` = "Negative/NA Group 2")
 na_plot_df$group = factor(na_plot_df$group, 
-                          levels = c("NA Group 2 - NA Group 1",
-                                     "Negative - NA Group 1", 
-                                     "Negative - NA Group 2"))
+                          levels = c("NA Group 2/NA Group 1",
+                                     "Negative/NA Group 1", 
+                                     "Negative/NA Group 2"))
 ```
 
 ## Plotting heatmaps
@@ -193,16 +193,18 @@ ha_paired_heatmap = ha_plot_df %>%
     ggplot(aes(x = group, y = Genus, fill = value)) + 
     geom_tile(color = "black") +
     scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                         na.value = "white", midpoint = hana_mid, limits = c(hana_lo, hana_up)) +
-    geom_text(aes(label = value), size = 8, color = "black") +
+                         na.value = "white", midpoint = hana_mid, limits = c(hana_lo, hana_up)) + scale_x_discrete(labels=c(
+    "HA Group 2/HA Group 1" = "HA Group 2 / \nHA Group 1",
+    "Negative/HA Group 1" = "Negative / \nHA Group 1", 
+    "Negative/HA Group 2" = "Negative / \nHA Group 2"
+  )) + 
+    geom_text(aes(label = value), size = 12, color = "black") +
     labs(x = NULL, y = NULL) +
     theme_minimal() +
-    theme(plot.title = element_text(hjust = 0.5, size = 30),
-          panel.grid.minor.y = element_blank(),
-          axis.text.x = element_text(size = 20),
-          axis.text.y = element_text(size = 20),
-          legend.text = element_text(hjust = 1, size = 20),
-          legend.title = element_text(size = 20)) +
+    theme(axis.text.x = element_text(size = 35),
+          axis.text.y = element_text(size = 35),
+          legend.text = element_text(hjust = 1, size = 28),
+          legend.title = element_text(size = 30)) +
   guides(fill = guide_colorbar(
         title = "Log2 Fold Change",
         title.hjust = 0.5,
@@ -217,15 +219,18 @@ na_paired_heatmap = na_plot_df %>%
     geom_tile(color = "black") + 
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
                          na.value = "white", midpoint = hana_mid, limits = c(hana_lo, hana_up)) +
-    geom_text(aes(label = value), size = 8, color = "black") +
+  scale_x_discrete(labels=c(
+    "NA Group 2/NA Group 1" = "NA Group 2 / \nNA Group 1",
+    "Negative/NA Group 1" = "Negative / \nNA Group 1", 
+    "Negative/NA Group 2" = "Negative / \nNA Group 2"
+  )) + 
+    geom_text(aes(label = value), size = 12, color = "black") +
     labs(x = NULL, y = NULL) +
     theme_minimal() +
-   theme(plot.title = element_text(hjust = 0.5, size = 30),
-          panel.grid.minor.y = element_blank(),
-          axis.text.x = element_text(size = 20),
-          axis.text.y = element_text(size = 20),
-          legend.text = element_text(hjust = 1, size = 20),
-         legend.title = element_text(size = 20)) +
+   theme(axis.text.x = element_text(size = 35),
+          axis.text.y = element_text(size = 35),
+          legend.text = element_text(hjust = 1, size = 28),
+         legend.title = element_text(size = 30)) +
   guides(fill = guide_colorbar(
         title = "Log2 Fold Change",
         title.hjust = 0.5,
@@ -238,7 +243,7 @@ na_paired_heatmap
 # Saving Graphs Generated
 
 ```{r}
-ggsave("../visualizations/figures/differential_abundance_ha.png", plot = ha_paired_heatmap, width = 15, height = 12)
+ggsave("../visualizations/figures/differential_abundance_ha.png", plot = ha_paired_heatmap, width = 20, height = 15)
 
-ggsave("../visualizations/figures/differential_abundance_na.png", plot = na_paired_heatmap, width = 15, height = 12)
+ggsave("../visualizations/figures/differential_abundance_na.png", plot = na_paired_heatmap, width = 20, height = 15)
 ```
