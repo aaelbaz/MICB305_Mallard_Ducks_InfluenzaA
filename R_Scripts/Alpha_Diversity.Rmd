@@ -138,10 +138,14 @@ p_HA_group_shannon = plot_richness(psrare, x="ha_group",
 
 pdata_HA_group_shannon = p_HA_group_shannon$data
 
+
+```
+Generating the initial boxplot without significance annotations.
+```{r}
 p_formatted_HA_group = pdata_HA_group_shannon %>% ggplot(aes(ha_group,value, 
                                                              fill = ha_group)) +
   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
-  geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
+  geom_jitter(height= 0, width = 0.20, size = 2.5, alpha= 0.4) +
 theme_classic(base_size=16)+
   ylab("Shannon Diversity") + xlab("HA Phylogenetic Groups") +
   theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=20), 
@@ -155,8 +159,8 @@ theme_classic(base_size=16)+
 ))
  
 p_formatted_HA_group
-
 ```
+
 Statistical analysis of the shannon diversity metric between HA phylogenetic
 groups
 ```{r}
@@ -190,11 +194,13 @@ p_NA_group_shannon = plot_richness(psrare, x="na_group",
                   color= "na_group")
 
 pdata_NA_group_shannon = p_NA_group_shannon$data
-
+```
+Generating the initial boxplot without significance annotations.
+```{r}
 p_formatted_NA_group = pdata_NA_group_shannon %>% ggplot(aes(na_group,value, 
                                                              fill = na_group)) +
   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
-  geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
+  geom_jitter(height= 0, width = 0.20, size = 2.5, alpha= 0.4) +
 theme_classic(base_size=16)+
   ylab("Shannon Diversity") + xlab("NA Phylogenetic Groups") +
 theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=20), 
@@ -207,7 +213,6 @@ theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=20),
   "neg" = "#009E73"
 ))
 p_formatted_NA_group
-
 ```
 Statistical analysis of the shannon diversity metric between NA phylogenetic
 groups
@@ -316,7 +321,7 @@ groups.
 faith_formatted_HA_group = faith_metadata %>% ggplot(aes(ha_group,PD, 
                                                              fill = ha_group)) +
   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
-  geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
+  geom_jitter(height= 0, width = 0.20, size = 2.5, alpha= 0.4) +
 theme_classic(base_size=16)+
   ylab("Faith's Diversity") + xlab("HA Phylogenetic Groups") +
   theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=20), 
@@ -356,7 +361,7 @@ groups.
 faith_formatted_NA_group = faith_metadata %>% ggplot(aes(na_group,PD, 
                                                              fill = na_group)) +
   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
-  geom_jitter(height= 0, width = 0.20, size = 1.5, alpha= 0.4) +
+  geom_jitter(height= 0, width = 0.20, size = 2.5, alpha= 0.4) +
 theme_classic(base_size=16)+
   ylab("Faith's Diversity") + xlab("NA Phylogenetic Groups") +
    theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=20), 
