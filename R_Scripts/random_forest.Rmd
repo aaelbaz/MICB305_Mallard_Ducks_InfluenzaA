@@ -104,7 +104,7 @@ na_prepped_rf_df <- vsurf_df_pivot_na |>
   filter(na_group != "neg")|>
   mutate(na_group = case_when(na_group == 1 ~ "one", na_group == 2 ~ "two"))|>
   mutate(na_group = as.factor(na_group))
-# # 
+#
 ```
 # 
 # ## Running our RandomForest Model for HA and NA
@@ -191,7 +191,8 @@ roc_data = data.frame(Dataset = 'df',
 #            auc(roc_train), pd_model$auc_train_ci[1], pd_model$auc_train_ci[2],
 #            auc(roc_test), pd_model$auc_test_ci[1], pd_model$auc_test_ci[2]),
 #            size = 12) +
-#   theme_minimal(base_size=24)
+#   labs(x = "False Positive Rate", y = "True Positive Rate")+
+#   theme_classic(base_size=24)
 # 
 # ha_auc
 
@@ -226,7 +227,7 @@ na_auc
 ## NA graphs
 
 pd_model$importance <- pd_model$importance |>
-   filter(MeanDecreaseGini >= .6)
+   filter(MeanDecreaseGini >= 0.6266017)
 
 na_rf_importance_graph <- pd_model$importance %>%
   mutate(Feature = factor(.$Feature,levels = .$Feature)) %>%
@@ -249,11 +250,10 @@ na_rf_importance_graph
 #   ggplot(aes(Feature,MeanDecreaseGini,fill=MeanDecreaseGini)) +
 #   geom_col() +
 #   theme_classic(base_size=28) +
-#   theme(axis.text.x = element_text(angle=90, vjust = 1, hjust=1)) +
+#   theme(axis.text.x = element_text(angle=70, vjust = 1, hjust=1)) +
 #   ylab('Importance (Gini)') + xlab(NULL)
 # 
 # ha_rf_importance_graph
-# 
 
 
 ```
