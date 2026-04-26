@@ -1,5 +1,6 @@
 ---
 title: "differential_abundance"
+author: Howard 
 output: html_document
 ---
 
@@ -20,6 +21,7 @@ library(ggrepel)
 ## Wrangling steps
 
 ```{r}
+# load in phyloseq object
 ps = readRDS('../processed_data/phyloseq_taxonomy.rds')
 ```
 
@@ -29,7 +31,7 @@ set.seed(412)
 # Taxa is considered at the Genus level 
 ps_genus = tax_glom(ps, 'Genus')
 
-# filter for taxa with mean abundance of less than 0.0001 to reduce noise 
+# filter out taxa with mean abundance of less than 0.0001 to reduce noise 
 temp_relab = transform(ps_genus, 'compositional')
 temp_filt = filter_taxa(temp_relab, function(x) mean(x) >= 0.0001, TRUE)
 
@@ -38,6 +40,10 @@ ps_filt
 ```
 
 # HA Grouping Comparison
+
+-   Run ANCOMBC2 analysis
+
+-   Generate data layers necessary for heatmap generation
 
 ```{r}
 # Running ANCOMBC2 Analysis
@@ -106,6 +112,10 @@ ha_plot_df$group = factor(ha_plot_df$group,
 ```
 
 # NA Grouping Comparison
+
+-   Run ANCOMBC2 analysis
+
+-   Generate data layers necessary for heatmap generation
 
 ```{r}
 # Running ANCOMBC2 analysis on NA Group
@@ -193,7 +203,9 @@ ha_paired_heatmap = ha_plot_df %>%
     ggplot(aes(x = group, y = Genus, fill = value)) + 
     geom_tile(color = "black") +
     scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                         na.value = "white", midpoint = hana_mid, limits = c(hana_lo, hana_up)) + scale_x_discrete(labels=c(
+                         na.value = "white", midpoint = hana_mid, limits = c(hana_lo, hana_up)) + 
+  # manual editing of labels for X-axis so that the labels can be split into two lines
+  scale_x_discrete(labels=c(
     "HA Group 2/HA Group 1" = "HA Group 2 / \nHA Group 1",
     "Negative/HA Group 1" = "Negative / \nHA Group 1", 
     "Negative/HA Group 2" = "Negative / \nHA Group 2"
@@ -205,6 +217,7 @@ ha_paired_heatmap = ha_plot_df %>%
           axis.text.y = element_text(size = 35),
           legend.text = element_text(hjust = 1, size = 28),
           legend.title = element_text(size = 30)) +
+  # editing the legend so that it is longer/more proportional to the heatmap
   guides(fill = guide_colorbar(
         title = "Log2 Fold Change",
         title.hjust = 0.5,
@@ -219,6 +232,7 @@ na_paired_heatmap = na_plot_df %>%
     geom_tile(color = "black") + 
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
                          na.value = "white", midpoint = hana_mid, limits = c(hana_lo, hana_up)) +
+  # manual editing of labels for X-axis so that the labels can be split into two lines
   scale_x_discrete(labels=c(
     "NA Group 2/NA Group 1" = "NA Group 2 / \nNA Group 1",
     "Negative/NA Group 1" = "Negative / \nNA Group 1", 
@@ -231,6 +245,7 @@ na_paired_heatmap = na_plot_df %>%
           axis.text.y = element_text(size = 35),
           legend.text = element_text(hjust = 1, size = 28),
          legend.title = element_text(size = 30)) +
+  # editing the legend so that it is longer/more proportional to the heatmap
   guides(fill = guide_colorbar(
         title = "Log2 Fold Change",
         title.hjust = 0.5,
