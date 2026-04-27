@@ -1,7 +1,7 @@
 ---
 title: "differential_abundance"
-author: Howard 
 output: html_document
+author: "Howard Chen"
 ---
 
 # Differential Abundance Analysis using ANCOMBC2
@@ -258,7 +258,7 @@ na_paired_heatmap
 # Saving Graphs Generated
 
 ```{r}
-ggsave("../visualizations/figures/differential_abundance_ha.png", plot = ha_paired_heatmap, width = 20, height = 15)
+ggsave("../visualizations/figures/differential_abundance/differential_abundance_ha.png", plot = ha_paired_heatmap, width = 20, height = 15)
 
-ggsave("../visualizations/figures/differential_abundance_na.png", plot = na_paired_heatmap, width = 20, height = 15)
+ggsave("../visualizations/figures/differential_abundance/differential_abundance_na.png", plot = na_paired_heatmap, width = 20, height = 15)
 ```

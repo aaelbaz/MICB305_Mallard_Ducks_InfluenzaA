@@ -10,7 +10,7 @@ author: "Soroush Torfehnejad"
 
 The rarefaction depth of 5396 was selected based on results obtained during the QIIME2 processing steps.
 
-```{r}
+```{r Load data, libraries, and subcatagoriuze phylosq tables}
 library(tidyverse)
 library(phyloseq)
 library(vegan)
@@ -287,7 +287,7 @@ Permanova_HA_G1_vs_G2 <- adonis2(ps_WUF_G1_vs_G2_HA ~ ha_group,
                        data <- metadata_ha_g1_g2 %>% filter(ha_group %in% compare_G1_vs_G2_HA),permutations = 99999)
 Permanova_HA_G1_vs_G2 
 
-# This comparison showed no significance (p = 0.3286), indicative of no differences between the beta-diversity of HA G1 vs G2
+# This comparison showed no significance (p = 0.3286), indicative of no differences between the beta-diversity of G1 vs G2
 
 
 # Comparing HA G1 vs Neg using PERMANOVA 
@@ -302,7 +302,7 @@ Permanova_HA_G1_vs_neg <- adonis2(ps_WUF_G1_vs_neg_HA ~ ha_group,
                        data = metadata_ha_g1_neg %>% filter(ha_group %in% compare_G1_vs_neg_HA), permutations = 99999)
 Permanova_HA_G1_vs_neg 
 
-# This comparison showed no significance (p = 0.09864), indicative of no differences between the beta-diversity of HA G1 vs neg
+# This comparison showed no significance (p = 0.09864), indicative of no differences between the beta-diversity of G1 vs neg
 
 
 # Comparing HA G2 Vs Neg using PERMANOVA 
@@ -317,7 +317,7 @@ Permanova_HA_G2_vs_neg <- adonis2(ps_WUF_G2_vs_neg_HA ~ ha_group,
                        data = metadata_ha_g2_neg %>% filter(ha_group %in% compare_G2_vs_neg_HA), permutations = 99999)
 Permanova_HA_G2_vs_neg 
 
-# This comparison showed significance (p = 0.01333), indicative of statistically significant differences between the beta-diversity of HA G2 vs neg. That may indicate that HA group 2 has a stronger effect on the beta-diversity of the cloacal microbiome.
+# This comparison showed significance (p = 0.01333), indicative of statistically significant differences between the beta-diversity of G2 vs neg. That may indicate that HA group 2 has a stronger effect on the beta-diversity of the cloacal microbiome.
 ```
 
 ### Step 5.5. Adjust p-values to account for multiple comparisons
@@ -453,7 +453,7 @@ set.seed(421)
 # Single variable anova
 Permanova_on_NA_groups <- adonis2(ps_all_groups_WUF ~ na_group, data = metadata_all_groups, permutation = 99999)
 Permanova_on_NA_groups
-# When observing if their is a difference in the beta-diversity between NA Group 1, 2 or negative control, statistical significance was seen (p = 0.0235). This statistical significance led to us comparing each individual group within the na_group column: group 1 vs group 2 vs uninfected.
+# @hen observing if their is a difference in the beta-diversity between NA Group 1, 2 or negative control, statistical significance was seen (p = 0.0235). This statistical significance led to us comparing each individual group within the na_group column: group 1 vs group 2 vs uninfected.
 
 
 # Comparing NA G1 Vs G2 using PERMANOVA 
@@ -554,21 +554,21 @@ ggsave('../visualizations/figures/beta_diversity/Beta Diversity NA G2 vs NEG.jpe
 ```{r}
 # HA Comparisons
 writexl::write_xlsx(list('Beta Diversity' = Permanova_on_HA_groups),
-                    '../processed_data/beta_diversity/Beta Diversity Permanova_on_HA_groups.xlsx')
+                    '../visualizations/tables/beta_diversity/Beta Diversity Permanova_on_HA_groups.xlsx')
 writexl::write_xlsx(list('Beta Diversity' = Permanova_HA_G1_vs_G2),
-                    '../processed_data/beta_diversity/Beta Diversity Permanova_HA_G1_vs_G2.xlsx')
+                    '../visualizations/tables/beta_diversity/Beta Diversity Permanova_HA_G1_vs_G2.xlsx')
 writexl::write_xlsx(list('Beta Diversity' = Permanova_HA_G1_vs_neg),
-                    '../processed_data/beta_diversity/Beta Diversity Permanova_HA_G1_vs_neg.xlsx')
+                    '../visualizations/tables/beta_diversity/Beta Diversity Permanova_HA_G1_vs_neg.xlsx')
 writexl::write_xlsx(list('Beta Diversity' = Permanova_HA_G2_vs_neg),
-                    '../processed_data/beta_diversity/Beta Diversity Permanova_HA_G2_vs_neg.xlsx')
+                    '../visualizations/tables/beta_diversity/Beta Diversity Permanova_HA_G2_vs_neg.xlsx')
 
 # NA Comparisons
 writexl::write_xlsx(list('Beta Diversity' = Permanova_on_NA_groups),
-                    '../processed_data/beta_diversity/Beta Diversity Permanova_on_NA_groups.xlsx')
+                    '../visualizations/tables/beta_diversity/Beta Diversity Permanova_on_NA_groups.xlsx')
 writexl::write_xlsx(list('Beta Diversity' = Permanova_NA_G1_vs_G2),
-                    '../processed_data/beta_diversity/Beta Diversity Permanova_NA_G1_vs_G2.xlsx')
+                    '../visualizations/tables/beta_diversity/Beta Diversity Permanova_NA_G1_vs_G2.xlsx')
 writexl::write_xlsx(list('Beta Diversity' = Permanova_NA_G1_vs_neg),
-                    '../processed_data/beta_diversity/Beta Diversity Permanova_NA_G1_vs_neg.xlsx')
+                    '../visualizations/tables/beta_diversity/Beta Diversity Permanova_NA_G1_vs_neg.xlsx')
 writexl::write_xlsx(list('Beta Diversity' = Permanova_NA_G2_vs_neg),
-                    '../processed_data/beta_diversity/Beta Diversity Permanova_NA_G2_vs_neg.xlsx')
+                    '../visualizations/tables/beta_diversity/Beta Diversity Permanova_NA_G2_vs_neg.xlsx')
 ```

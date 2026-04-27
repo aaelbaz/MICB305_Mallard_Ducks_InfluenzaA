@@ -1,15 +1,10 @@
 ---
 title: "random_forest"
-author: "David"
-date: "`r Sys.Date()`"
 output: html_document
+author: "David Medvedev"
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-## Loading libraries
+## Load Libraries and Reference Functions
 
 ```{r}
 library(tidyverse)
@@ -29,207 +24,187 @@ library(ranger)
 library(pROC)
 library(boot)
 library(MLmetrics)
+
+## Using Avril's Code from MICB 305 repository
+source("reference_functions/randomforest_functions.R")
 ```
 
-## Loading Datafiles
+## Load Data
 
-To run our randomforest model we will use the same phyloseq object during earlier coding work. We will attempt to generate a randomforest predictive model using VSURF predicted taxa of importance. The MICB 305 reference script by Avril Metcalfe-Roach will be used to run a randomforest model. All HA related scripts that would interfere with NA related scripts have been commented out. Any person who wishes to run our analyses on HA data should comment out NA related scripts while uncommenting HA related scripts.
+To build our RandomForest models we will use the previously generated phyloseq object alongside the reference R script created for MICB 305 by Dr. Avril Metcalfe-Roach.
 
 ```{r}
-ps = readRDS('../processed_data/phyloseq_taxonomy.rds')|>
-  tax_glom("Genus")
-
+ps = readRDS('../processed_data/phyloseq_taxonomy.rds')|> tax_glom("Genus")
 ```
 
-## Wrangling our PS object for HA and NA RF model
+## Wrangle Phyloseq Object for HA and NA RandomForest Models
 
 ```{r}
-
 select <- dplyr::select
-
 set.seed(420)
+
 
 ps_clr = ps |>
   microbiome::transform("clr")|>
   filter_taxa(function(x) mean(x) >= 0.0001, TRUE)
 
-vsurf_df <- psmelt(ps_clr)
 
-vsurf_df_transformed <- vsurf_df |>
+rf_df_transformed <- psmelt(ps_clr) |>
   group_by(Genus)|>
   mutate(Abundance = scale(Abundance))|>
   ungroup()|>
-  mutate(Abundance = Abundance[, 1])
+  mutate(Abundance = Abundance[, 1]) |>
+  filter(Genus != " g__uncultured")
 
-vsurf_df_transformed <- vsurf_df_transformed |>
-    filter(Genus != " g__uncultured")
-
-vsurf_df_transformed$Genus = vsurf_df_transformed$Genus %>% str_replace("g__", "")
+rf_df_transformed$Genus = rf_df_transformed$Genus %>% str_replace("g__", "")
 
 
- vsurf_df_pivot_ha <- vsurf_df_transformed |>
+rf_df_ha <- rf_df_transformed |>
    select(Sample, ha_group, Genus, Abundance) |>
    pivot_wider(names_from = Genus, values_from = Abundance)|>
    filter(ha_group != "neg")|>
-   select(-Sample)
+   select(-Sample) |>
+   na.omit()|>
+   mutate(ha_group = case_when(ha_group == 1 ~ "one", ha_group == 2 ~ "two"))|>
+   mutate(ha_group = as.factor(ha_group))
 
-vsurf_df_pivot_na = vsurf_df_transformed |>
+rf_df_na = rf_df_transformed |>
   select(Sample, na_group, Genus, Abundance) |>
   pivot_wider(names_from = Genus, values_from = Abundance)|>
   filter(na_group != "neg")|>
-  select(-Sample)
-
-
-
-```
-
-
-## Prepping our HA df for RF:
-
-```{r}
-
-# ha_prepped_rf_df <- vsurf_df_pivot_ha |>
-#   na.omit()|>
-#   filter(ha_group != "neg")|>
-#   mutate(ha_group = case_when(ha_group == 1 ~ "one", ha_group == 2 ~ "two"))|>
-#   mutate(ha_group = as.factor(ha_group))
-
-```
-## Prepping our NA df for RF:
-
-```{r}
-
-na_prepped_rf_df <- vsurf_df_pivot_na |>
+  select(-Sample) |>
   na.omit()|>
-  filter(na_group != "neg")|>
   mutate(na_group = case_when(na_group == 1 ~ "one", na_group == 2 ~ "two"))|>
   mutate(na_group = as.factor(na_group))
-#
 ```
-# 
-# ## Running our RandomForest Model for HA and NA
-# 
+
+## Generate RandomForest Models for HA and NA
+
 ```{r}
-# 
-# ## running code for NA/HA RF (THROUGH MANUAL REPLACEMENT)
-# 
+# Create predictors and outcomes
+predictors_ha <- rf_df_ha |>
+  select(-ha_group)
+outcome_ha = rf_df_ha |>
+  pull(ha_group)
 
-## HA RF
-
-# predictors_ha <- ha_prepped_rf_df|>
-#   select(-ha_group)
-# 
-# outcome_ha = ha_prepped_rf_df|>
-#   pull(ha_group)
-# 
-# k = 10
-# folds = createFolds(outcome_ha, k=k, list = TRUE)
-# 
-# tune_grid = expand.grid(mtry = c(7, 15, 20), splitrule = c(
-# "gini"), min.node.size = c(10,25,50))
-# 
-# source("reference_functions/randomforest_functions.R")
-# 
-# ## Using Avril's Code from MICB 305 repository
-# 
-# pd_model = run_rf(X= predictors_ha, y = outcome_ha, fold_list = folds, hyper = tune_grid, rngseed = 421)
-
-## NA RF
-
-predictors_na <- na_prepped_rf_df|>
+predictors_na <- rf_df_na|>
   select(-na_group)
-
-outcome_na = na_prepped_rf_df|>
+outcome_na = rf_df_na|>
   pull(na_group)
 
+# Set up cross-validation and hyperparameter optimization
 k = 10
-folds = createFolds(outcome_na, k=k, list = TRUE)
+ha_folds = createFolds(outcome_ha, k=k, list = TRUE)
+na_folds = createFolds(outcome_na, k=k, list = TRUE)
 
 tune_grid = expand.grid(mtry = c(7, 15, 20), splitrule = c(
-  "gini"), min.node.size = c(10,25,50))
+"gini"), min.node.size = c(10,25,50))
 
-source("reference_functions/randomforest_functions.R")
 
-## Using Avril's Code from MICB 305 repository
-
-pd_model = run_rf(X= predictors_na, y = outcome_na, fold_list = folds, hyper = tune_grid, rngseed = 421)
-
+# Build RandomForest models
+ha_model = run_rf(X=predictors_ha, y=outcome_ha, fold_list=ha_folds, hyper=tune_grid, rngseed=421)
+na_model = run_rf(X=predictors_na, y=outcome_na, fold_list=na_folds, hyper=tune_grid, rngseed=421)
 ```
 
-## Visualizing our Results for both HA and NA:
+## Visualize Results
+
+### HA
 
 ```{r}
+roc_test_ha = roc(ha_model$test_labels$true_labels,
+               ha_model$test_labels$predicted_probabilities)
+roc_train_ha = roc(ha_model$train_labels$true_labels,
+                ha_model$train_labels$predicted_probabilities)
 
-roc_test = roc(pd_model$test_labels$true_labels,
-               pd_model$test_labels$predicted_probabilities)
-roc_train = roc(pd_model$train_labels$true_labels,
-                pd_model$train_labels$predicted_probabilities)
-
-roc_data = data.frame(Dataset = 'df',
-     Training_AUC = round(pd_model$auc_train, 2),
-     Training_AUC_CI = paste0(round(pd_model$auc_train_ci[1], 2), "-",
-                              round(pd_model$auc_train_ci[2], 2)),
-     Testing_AUC = round(pd_model$auc_test, 2),
-     Testing_AUC_CI = paste0(round(pd_model$auc_test_ci[1], 2), "-",
-                             round(pd_model$auc_test_ci[2], 2)))
-
-
-#### HA SPECIFIC
+roc_data_ha = data.frame(Dataset = 'df',
+     Training_AUC = round(ha_model$auc_train, 2),
+     Training_AUC_CI = paste0(round(ha_model$auc_train_ci[1], 2), "-",
+                              round(ha_model$auc_train_ci[2], 2)),
+     Testing_AUC = round(ha_model$auc_test, 2),
+     Testing_AUC_CI = paste0(round(ha_model$auc_test_ci[1], 2), "-",
+                             round(ha_model$auc_test_ci[2], 2)))
 
 
-# ha_auc <- ggplot() +
-#   geom_line(aes(x = 1 - roc_train$specificities,
-#                 y = roc_train$sensitivities),
-#             color = "red",size=1) +
-#   geom_line(aes(x = 1 - roc_test$specificities,
-#                 y = roc_test$sensitivities),
-#             color = "black",size=1) +
-#   geom_abline(slope = 1, intercept = 0, color = "gray", linetype = "dashed",size=1) +
-#   labs(x = "", y = "") +
-#   annotate("text", x = 0.7, y = 0.2,
-#            label = sprintf("Train (red): %.2f (%.2f-%.2f)\nTest (black): %.2f (%.2f-%.2f)",
-#            auc(roc_train), pd_model$auc_train_ci[1], pd_model$auc_train_ci[2],
-#            auc(roc_test), pd_model$auc_test_ci[1], pd_model$auc_test_ci[2]),
-#            size = 12) +
-#   labs(x = "False Positive Rate", y = "True Positive Rate")+
-#   theme_classic(base_size=24)
-# 
-# ha_auc
-
-
-#### NA SPECIFIC
-
-na_auc <- ggplot() +
-  geom_line(aes(x = 1 - roc_train$specificities,
-                y = roc_train$sensitivities),
+ha_auc <- ggplot() +
+  geom_line(aes(x = 1 - roc_train_ha$specificities,
+                y = roc_train_ha$sensitivities),
             color = "red",size=1) +
-  geom_line(aes(x = 1 - roc_test$specificities,
-                y = roc_test$sensitivities),
+  geom_line(aes(x = 1 - roc_test_ha$specificities,
+                y = roc_test_ha$sensitivities),
             color = "black",size=1) +
   geom_abline(slope = 1, intercept = 0, color = "gray", linetype = "dashed",size=1) +
-  labs(x = "", y = "") +
   annotate("text", x = 0.7, y = 0.2,
            label = sprintf("Train (red): %.2f (%.2f-%.2f)\nTest (black): %.2f (%.2f-%.2f)",
-           auc(roc_train), pd_model$auc_train_ci[1], pd_model$auc_train_ci[2],
-           auc(roc_test), pd_model$auc_test_ci[1], pd_model$auc_test_ci[2]),
+           auc(roc_train_ha), ha_model$auc_train_ci[1], ha_model$auc_train_ci[2],
+           auc(roc_test_ha), ha_model$auc_test_ci[1], ha_model$auc_test_ci[2]),
            size = 12) +
   labs(x = "False Positive Rate", y = "True Positive Rate")+
   theme_classic(base_size=24)
 
-na_auc
-
-
+ha_auc
 ```
-## Generating an importance graph for NA/HA randomforest:
 
-``` {r}
+### NA
 
-## NA graphs
+```{r}
+roc_test_na = roc(na_model$test_labels$true_labels,
+               na_model$test_labels$predicted_probabilities)
+roc_train_na = roc(na_model$train_labels$true_labels,
+                na_model$train_labels$predicted_probabilities)
 
-pd_model$importance <- pd_model$importance |>
+roc_data_na = data.frame(Dataset = 'df',
+     Training_AUC = round(na_model$auc_train, 2),
+     Training_AUC_CI = paste0(round(na_model$auc_train_ci[1], 2), "-",
+                              round(na_model$auc_train_ci[2], 2)),
+     Testing_AUC = round(na_model$auc_test, 2),
+     Testing_AUC_CI = paste0(round(na_model$auc_test_ci[1], 2), "-",
+                             round(na_model$auc_test_ci[2], 2)))
+
+
+na_auc <- ggplot() +
+  geom_line(aes(x = 1 - roc_train_na$specificities,
+                y = roc_train_na$sensitivities),
+            color = "red",size=1) +
+  geom_line(aes(x = 1 - roc_test_na$specificities,
+                y = roc_test_na$sensitivities),
+            color = "black",size=1) +
+  geom_abline(slope = 1, intercept = 0, color = "gray", linetype = "dashed",size=1) +
+  annotate("text", x = 0.7, y = 0.2,
+           label = sprintf("Train (red): %.2f (%.2f-%.2f)\nTest (black): %.2f (%.2f-%.2f)",
+           auc(roc_train_na), na_model$auc_train_ci[1], na_model$auc_train_ci[2],
+           auc(roc_test_na), na_model$auc_test_ci[1], na_model$auc_test_ci[2]),
+           size = 12) +
+  labs(x = "False Positive Rate", y = "True Positive Rate") +
+  theme_classic(base_size=24)
+
+na_auc
+```
+
+## Generate Importance Plots for HA and NA Models
+
+### HA
+
+```{r}
+ha_model$importance <- ha_model$importance |> filter(MeanDecreaseGini >= .6)
+
+ha_rf_importance_graph <- ha_model$importance %>%
+  mutate(Feature = factor(.$Feature,levels = .$Feature)) %>%
+  ggplot(aes(Feature,MeanDecreaseGini,fill=MeanDecreaseGini)) +
+  geom_col() +
+  theme_classic(base_size=28) +
+  theme(axis.text.x = element_text(angle=70, vjust = 1, hjust=1)) +
+  ylab('Importance (Gini)') + xlab(NULL)
+
+ha_rf_importance_graph
+```
+
+### NA
+
+```{r}
+na_model$importance <- na_model$importance |>
    filter(MeanDecreaseGini >= 0.6266017)
 
-na_rf_importance_graph <- pd_model$importance %>%
+na_rf_importance_graph <- na_model$importance %>%
   mutate(Feature = factor(.$Feature,levels = .$Feature)) %>%
   ggplot(aes(Feature,MeanDecreaseGini,fill=MeanDecreaseGini)) +
   geom_col() +
@@ -238,38 +213,14 @@ na_rf_importance_graph <- pd_model$importance %>%
   ylab('Importance (Gini)') + xlab(NULL)
 
 na_rf_importance_graph
-
-
-## HA Graph
-
-# pd_model$importance <- pd_model$importance |>
-#     filter(MeanDecreaseGini >= .6)
-# 
-# ha_rf_importance_graph <- pd_model$importance %>%
-#   mutate(Feature = factor(.$Feature,levels = .$Feature)) %>%
-#   ggplot(aes(Feature,MeanDecreaseGini,fill=MeanDecreaseGini)) +
-#   geom_col() +
-#   theme_classic(base_size=28) +
-#   theme(axis.text.x = element_text(angle=70, vjust = 1, hjust=1)) +
-#   ylab('Importance (Gini)') + xlab(NULL)
-# 
-# ha_rf_importance_graph
-
-
 ```
 
-## Saving our graphs
+## Save Plots
+
 ```{r}
-# 
-# ggsave("../visualizations/figures/ha_randomforest_auc.png", plot = ha_auc, width = 18, height = 10)
-# ggsave("../visualizations/figures/ha_randomforest_importance.png", plot = ha_rf_importance_graph, width = 18, height = 10)
+ggsave("../visualizations/figures/random_forest/ha_randomforest_auc.png", plot = ha_auc, width = 18, height = 10)
+ggsave("../visualizations/figures/random_forest/ha_randomforest_importance.png", plot = ha_rf_importance_graph, width = 18, height = 10)
 
-
-ggsave("../visualizations/figures/na_randomforest_auc.png", plot = na_auc, width = 18, height = 10)
-ggsave("../visualizations/figures/na_randomforest_importance.png", plot = na_rf_importance_graph, width = 18, height = 10)
-
-
-
-
-
+ggsave("../visualizations/figures/random_forest/na_randomforest_auc.png", plot = na_auc, width = 18, height = 10)
+ggsave("../visualizations/figures/random_forest/na_randomforest_importance.png", plot = na_rf_importance_graph, width = 18, height = 10)
 ```

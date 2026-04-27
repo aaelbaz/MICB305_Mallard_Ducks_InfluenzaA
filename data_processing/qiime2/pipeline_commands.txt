@@ -1,9 +1,12 @@
+#### Important Notes ####
+The QIIME2 pipeline commands listed below are written as they were during analysis.
+Since then, some file names have been slightly modified locally such that they are easier to recognize/understand.
+
+
+
 #### Relevant File Paths
-
 /datasets/project_2/duck_flu/duck_flu_seqs
-
 duck_flu_manifest_corrected.txt
-
 ./duck_flu_metadata_wrangled.tsv
 
 
@@ -123,7 +126,7 @@ qiime taxa filter-table \
 
 
 
-#### Alpha & Beta Diversity Analyses
+#### Preliminary Command-line Alpha & Beta Diversity Analyses
 
 # Generate a tree for phylogenetic diversity analyses
 qiime phylogeny align-to-tree-mafft-fasttree \

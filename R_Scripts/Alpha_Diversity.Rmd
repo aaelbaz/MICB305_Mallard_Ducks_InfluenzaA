@@ -1,15 +1,14 @@
 ---
-title: "Alpha_Diversity"
+title: "alpha_diversity"
 output: html_document
+author: "Ryan Chen"
 ---
 
-### Introduction ###
+## Introduction
 
-The alpha diversity of cloacal microbiome data from influenza A–infected mallard ducks was analyzed using the Shannon and Faith’s diversity metrics. The code
-for this analysis was adapted from UBC MICB 305 and MICB 205 course material.
+Alpha diversity of the cloacal microbiomes of influenza A infected mallard ducks was analyzed using Shannon and Faith’s diversity metrics. The code for this analysis was adapted from UBC MICB 305 and MICB 205 course material.
 
-Loading the packages needed for Alpha diversity measures and statistical 
-analysis.
+## Load Libraries
 
 ```{r}
 library(tidyverse)
@@ -21,115 +20,25 @@ library(dunn.test)
 library(ggsignif)
 ```
 
-Importing processed phyloseq object from generate_phyloseq.Rmd
-```{r}
+## Load Data
 
+```{r}
 ps <- readRDS('../processed_data/phyloseq_taxonomy.rds')
-
 ```
-Rarefying the data.
+
+## Rarefy the Data
+
 ```{r}
-psrare= ps %>% rarefy_even_depth(sample.size = 5396, rngseed = 360)
-
-#The rarefraction depth was decided based on qiime 2 outputs 
-``` 
-### Shannon's Diversity Index ###
-
-## HA and NA ##
-Calculating the Shannon diversity metric.
-```{r}
-set.seed(360)
-p = plot_richness(psrare, x="HA_NA",
-                        measures = c("Shannon"),
-                  color= "HA_NA")
-
-pdata = p$data
-#Extracting Shannon diversity 
-
+# rarefraction depth was decided based on QIIME2 outputs 
+psrare = ps %>% rarefy_even_depth(sample.size = 5396, rngseed = 360)
 ```
-Statistical analysis of the shannon diversity metric between subtypes. 
-```{r}
-df <- data.frame(HA_NA = as.factor(pdata$HA_NA), value = pdata$value)
-#Kruskal-Wallis and Dunn's test as post-hoc
-res_sig <-dunn.test(df$value, df$HA_NA, kw=TRUE, method = "bh")
-```
-## NA Not Aggregated ##
-Shannon diversity calculation but grouped by NA subtype. 
-```{r}
-set.seed(360)
-p_NA_shannon = plot_richness(psrare, x="na_subtype",
-                        measures = c("Shannon"),
-                  color= "na_subtype")
 
-pdata_NA_shannon = p_NA_shannon$data
+## Shannon's Diversity
 
-```
-Statistical analysis of the shannon diversity metric between NA subtypes.
-```{r}
-df_NA_shannon <- data.frame(na_subtype = as.factor(pdata_NA_shannon$na_subtype), value = pdata_NA_shannon$value)
-#Kruskal-Wallis and Dunn's test as post-hoc
-res_sig_NA <-dunn.test(df_NA_shannon$value, df_NA_shannon$na_subtype, kw=TRUE,
-                    method = "bh")
-```
-## HA Not Aggregated ##
-Shannon diversity calculation but grouped by HA subtype. 
-```{r}
-set.seed(360)
-p_HA_shannon = plot_richness(psrare, x="ha_subtype",
-                        measures = c("Shannon"),
-                  color= "ha_subtype")
+### HA Phylogenetic Groups
 
-pdata_HA_shannon = p_HA_shannon$data
-```
-Statistical analysis of the shannon diversity metric between HA subtypes.
-```{r}
-df_HA_shannon <- data.frame(ha_subtype = as.factor(pdata_HA_shannon$ha_subtype), value = pdata_HA_shannon$value)
-#Kruskal-Wallis and Dunn's test as post-hoc
-res_sig_HA <-dunn.test(df_HA_shannon$value, df_HA_shannon$ha_subtype, kw=TRUE,
-                    method = "bh")
-```
-## NA Subtype Aggregated ##
-Shannon diversity calculation but grouped by NA subtype with aggregated 
-sub-subtype----->subtype. 
-```{r}
-set.seed(360)
-p_NA_aggr_shannon = plot_richness(psrare, x="na_aggr",
-                        measures = c("Shannon"),
-                  color= "na_aggr")
+#### Generate Shannon Metric
 
-pdata_NA_aggr_shannon = p_NA_aggr_shannon$data
-```
-Statistical analysis of the shannon diversity metric between NA aggregated 
-subtypes
-```{r}
-df_NA_aggr_shannon <- data.frame(na_aggr = as.factor(pdata_NA_aggr_shannon$na_aggr), value = pdata_NA_aggr_shannon$value)
-#Kruskal-Wallis and Dunn's test as post-hoc
-res_sig_aggr_NA <-dunn.test(df_NA_aggr_shannon$value, df_NA_aggr_shannon$na_aggr, kw=TRUE, method = "bh")
-#one significant group
-```
-## HA_subtype Aggregrated ##
-Shannon diversity calculation but grouped by HA subtype with aggregated 
-sub-subtype----->subtype. 
-```{r}
-set.seed(360)
-p_HA_aggr_shannon = plot_richness(psrare, x="ha_aggr",
-                        measures = c("Shannon"),
-                  color= "ha_aggr")
-
-pdata_HA_aggr_shannon = p_HA_aggr_shannon$data
-```
-Statistical analysis of the shannon diversity metric between HA aggregated 
-subtypes
-```{r}
-df_HA_aggr_shannon <- data.frame(ha_aggr = as.factor(pdata_HA_aggr_shannon$ha_aggr), value = pdata_HA_aggr_shannon$value)
-#Kruskal-Wallis and Dunn's test as post-hoc
-res_sig_aggr_HA <-dunn.test(df_HA_aggr_shannon$value, df_HA_aggr_shannon$ha_aggr, kw=TRUE, method = "bh")
-
-#one significant group
-
-```
-## HA Phylogenetic Groups ##
-Shannon diversity calculation but grouped by HA phylogenetic groups. 
 ```{r}
 set.seed(360)
 p_HA_group_shannon = plot_richness(psrare, x="ha_group",
@@ -137,13 +46,12 @@ p_HA_group_shannon = plot_richness(psrare, x="ha_group",
                   color= "ha_group")
 
 pdata_HA_group_shannon = p_HA_group_shannon$data
-
-
 ```
-Generating the initial boxplot without significance annotations.
+
+#### Create initial boxplot (no statistical annotations)
+
 ```{r}
-p_formatted_HA_group = pdata_HA_group_shannon %>% ggplot(aes(ha_group,value, 
-                                                             fill = ha_group)) +
+p_formatted_HA_group = pdata_HA_group_shannon %>% ggplot(aes(ha_group,value, fill = ha_group)) +
   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
   geom_jitter(height= 0, width = 0.20, size = 2.5, alpha= 0.4) +
 theme_classic(base_size=16)+
@@ -155,14 +63,13 @@ theme_classic(base_size=16)+
   scale_fill_manual(values = c(
   "1" = "#56B4E9",
   "2" = "#D55E00",
-  "neg" = "#009E73"
-))
+  "neg" = "#009E73"))
  
 p_formatted_HA_group
 ```
 
-Statistical analysis of the shannon diversity metric between HA phylogenetic
-groups
+#### Conduct statistical analysis of Shannon diversity between HA groups
+
 ```{r}
 df_HA_group_shannon <- data.frame(ha_group = as.factor(pdata_HA_group_shannon$ha_group), value = pdata_HA_group_shannon$value)
 #Kruskal-Wallis and Dunn's test as post-hoc
@@ -171,22 +78,24 @@ res_sig_group_HA <-dunn.test(df_HA_group_shannon$value, df_HA_group_shannon$ha_g
 #Two significant groups
 
 ```
-Generating a boxplot with significance bars. 
-```{r}
 
+#### Add statistical annotations to the boxplot and save the figure
+
+```{r}
 P_signif_group_HA <- p_formatted_HA_group + geom_signif(
     comparison = list(c("1", "neg"), c("2","neg")),
     y_position = c(4.5,4.25),
     annotations = c("*","*"),
-    textsize= 10
-  )
+    textsize= 10)
 P_signif_group_HA
 
-ggsave("Inf_HA_Group_Shannon.png", P_signif_group_HA, width =6, height = 9, dpi = 300)
-
+ggsave("../visualizations/figures/alpha_diversity/HA_Group_Shannon.png",P_signif_group_HA, width = 6, height = 9, dpi = 300)
 ```
-## NA Phylogenetic Groups ##
-Shannon diversity calculation but grouped by NA phylogenetic groups. 
+
+### NA Phylogenetic Groups
+
+#### Generate Shannon Metric
+
 ```{r}
 set.seed(360)
 p_NA_group_shannon = plot_richness(psrare, x="na_group",
@@ -195,10 +104,11 @@ p_NA_group_shannon = plot_richness(psrare, x="na_group",
 
 pdata_NA_group_shannon = p_NA_group_shannon$data
 ```
-Generating the initial boxplot without significance annotations.
+
+#### Create initial boxplot (no statistical annotations)
+
 ```{r}
-p_formatted_NA_group = pdata_NA_group_shannon %>% ggplot(aes(na_group,value, 
-                                                             fill = na_group)) +
+p_formatted_NA_group = pdata_NA_group_shannon %>% ggplot(aes(na_group,value, fill = na_group)) +
   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
   geom_jitter(height= 0, width = 0.20, size = 2.5, alpha= 0.4) +
 theme_classic(base_size=16)+
@@ -210,116 +120,79 @@ theme(axis.text.x = element_text(angle = 45, vjust=1, hjust=1, size=20),
  scale_fill_manual(values = c(
   "1" = "darkgrey",
   "2" = "#CC79A7",
-  "neg" = "#009E73"
-))
+  "neg" = "#009E73"))
+
 p_formatted_NA_group
 ```
-Statistical analysis of the shannon diversity metric between NA phylogenetic
-groups
+
+#### Conduct statistical analysis of Shannon diversity between NA groups
+
 ```{r}
 df_NA_group_shannon <- data.frame(na_group = as.factor(pdata_NA_group_shannon$na_group), value = pdata_NA_group_shannon$value)
 #Kruskal-Wallis and Dunn's test as post-hoc
 res_sig_group_NA <-dunn.test(df_NA_group_shannon$value, df_NA_group_shannon$na_group, kw=TRUE, method = "bh")
 ```
-Generating a boxplot with significance bars. 
+
+#### Add statistical annotations to the boxplot and save the figure
+
 ```{r}
 P_signif_group_NA <- p_formatted_NA_group + geom_signif(
     comparison = list( c("2","neg")),
     y_position = c(4),
     annotations = c("*"),
-    textsize = 10
-  )
+    textsize = 10)
 P_signif_group_NA
-ggsave("Inf_NA_Group_Shannon.png", P_signif_group_NA, width =6, height = 9, dpi = 300)
-```
-### Faith's Diversity ###
-Calculating the Faith's PD values for each sample.
-```{r}
 
-#Adapted from MICB 305
-#Taxa converted from columns to rows
+ggsave("../visualizations/figures/alpha_diversity/NA_Group_Shannon.png", P_signif_group_NA, width = 6, height = 9, dpi = 300)
+```
+
+## Faith's Diversity
+
+### Calculating Faith's PD values for each sample
+
+```{r}
+# Adapted from MICB 305
+
+# Taxa converted from columns to rows
 otu = as(otu_table(psrare), "matrix")
 if(taxa_are_rows(psrare)==TRUE) otu <- t(otu)
 
 # Extract your phyloseq object's tree
 tree_faith = phy_tree(psrare)
 
-#Check that all the ASV names match between OTU table and tree
+# Check that all the ASV names match between OTU table and tree
 stopifnot(all(colnames(otu) %in% tree_faith$tip.label))
 
-#Remove any unmatched tips
+# Remove any unmatched tips
 tree_faith = drop.tip(tree_faith, setdiff(tree_faith$tip.label, colnames(otu)))
-#Reorder to match
+
+# Reorder to match
 tree_faith = keep.tip(tree_faith, colnames(otu))
 
-#Rooting the tree
+# Rooting the tree
 if(!is.rooted(tree_faith)) tree_faith <- root(tree_faith, outgroup=tree_faith$tip.label[1], resolve.root=TRUE)
 
 # Calculate Faith's PD for each sample 
 #    1. Convert reads to presence/absence and pull into a matrix
+
 otu_pa = otu # Make a copy of your data, then...
 otu_pa[otu_pa>0] = 1 #...convert to presence/absence (1 for present, 0 for absent)
+
 #    2. Calculate metric
 faith = pd(otu_pa, tree_faith, include.root = TRUE) %>% select(-SR)
 
-#Merging phyloseq data with the Faith's PD data. 
-
+# Merging phyloseq data with the Faith's PD data. 
 metadata_rarefied = data.frame(sample_data(psrare))
 
 faith_metadata = merge(metadata_rarefied, faith, by= "row.names")
-
-
-
-
-
 ```
-## HA_NA ##
-Statistical testing for the Faith's diversity metric between HA_NA subtypes. 
-```{r}
-faith_HA_NA_df <- data.frame(HA_NA = as.factor(faith_metadata$HA_NA), value = faith_metadata$PD)
 
-faith_HA_NA_sig <-dunn.test(faith_HA_NA_df$value, faith_HA_NA_df$HA_NA, kw=TRUE, method = "bh")
-```
-## NA Subtype ## 
-Statistical testing for the Faith's diversity metric between NA subtypes. 
-```{r}
-faith_NA_df <- data.frame(na_subtype = as.factor(faith_metadata$na_subtype), 
-                                                 value = faith_metadata$PD)
-faith_NA_sig <- dunn.test(faith_NA_df$value, faith_NA_df$na_subtype, kw=TRUE, method = "bh")
-```
-## HA Subtype ## 
-Statistical testing for the Faith's diversity metric between HA subtypes. 
-```{r}
-faith_HA_df <- data.frame(ha_subtype = as.factor(faith_metadata$ha_subtype), 
-                                                 value = faith_metadata$PD)
-faith_HA_sig <- dunn.test(faith_HA_df$value, faith_HA_df$ha_subtype, kw=TRUE, method = "bh")
-```
-## NA Subtype Aggregated ##
-Statistical testing for the Faith's diversity metric between NA aggregated
-subtypes. 
-```{r}
-faith_NA_aggr_df <- data.frame(na_aggr = as.factor(faith_metadata$na_aggr), 
-                                                 value = faith_metadata$PD)
-faith_NA_aggr_sig <- dunn.test(faith_NA_aggr_df$value, faith_NA_aggr_df$na_aggr, kw=TRUE, method = "bh")
+### HA Phylogenetic Groups
 
-#Kruskal Wallis of 0.05 but no observed significant pairs
-```
-## HA Subtype Aggregated ##
-Statistical testing for the Faith's diversity metric between HA aggregated
-subtypes. 
-```{r}
-faith_HA_aggr_df <- data.frame(ha_aggr = as.factor(faith_metadata$ha_aggr), 
-                                                 value = faith_metadata$PD)
-faith_HA_aggr_sig <- dunn.test(faith_HA_aggr_df$value, faith_HA_aggr_df$ha_aggr, kw=TRUE, method = "bh")
+#### Create initial boxplot (no statistical annotations)
 
-#one significant group
-```
-## HA Phylogenetic Groups ##
-Initial boxplot of the Faith's diversity metric grouped by HA phylogenetic 
-groups.
 ```{r}
-faith_formatted_HA_group = faith_metadata %>% ggplot(aes(ha_group,PD, 
-                                                             fill = ha_group)) +
+faith_formatted_HA_group = faith_metadata %>% ggplot(aes(ha_group,PD, fill = ha_group)) +
   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
   geom_jitter(height= 0, width = 0.20, size = 2.5, alpha= 0.4) +
 theme_classic(base_size=16)+
@@ -331,35 +204,38 @@ theme_classic(base_size=16)+
    scale_fill_manual(values = c(
   "1" = "#56B4E9",
   "2" = "#D55E00",
-  "neg" = "#009E73"
-))
+  "neg" = "#009E73"))
+
 faith_formatted_HA_group
 ```
-Statistical testing for the Faith's diversity metric between HA phylogenetic 
-groups. 
-```{r}
-faith_HA_group_df <- data.frame(ha_group = as.factor(faith_metadata$ha_group), 
-                                                 value = faith_metadata$PD)
-faith_HA_group_sig <- dunn.test(faith_HA_group_df$value, faith_HA_group_df$ha_group, kw=TRUE, method = "bh")
 
+#### Conduct statistical analysis of Faith's diversity between HA groups
+
+```{r}
+faith_HA_group_df <- data.frame(ha_group = as.factor(faith_metadata$ha_group), value = faith_metadata$PD)
+faith_HA_group_sig <- dunn.test(faith_HA_group_df$value, faith_HA_group_df$ha_group, kw=TRUE, method = "bh")
 ```
-Significant comparisons mapped onto the initial boxplot.
+
+#### Add statistical annotations to the boxplot and save the figure
+
 ```{r}
 P_faith_group_HA <- faith_formatted_HA_group + geom_signif(
     comparison = list(c("1", "neg"), c("2","neg")),
     y_position = c(16,15.25),
     annotations = c("**","*"),
-    textsize = 10
-  )
+    textsize = 10)
+
 P_faith_group_HA
-ggsave("Inf_HA_Group_Faith.png", P_faith_group_HA, width= 6, height =9, dpi=300)
+
+ggsave("../visualizations/figures/alpha_diversity/HA_Group_Faith.png", P_faith_group_HA, width = 6, height =9, dpi=300)
 ```
-## NA Phylogenetic Group ##
-Initial boxplot of the Faith's diversity metric grouped by NA phylogenetic 
-groups.
+
+### NA Phylogenetic Group
+
+#### Create initial boxplot (no statistical annotations)
+
 ```{r}
-faith_formatted_NA_group = faith_metadata %>% ggplot(aes(na_group,PD, 
-                                                             fill = na_group)) +
+faith_formatted_NA_group = faith_metadata %>% ggplot(aes(na_group,PD, fill = na_group)) +
   geom_boxplot(outlier.shape = NA, alpha = 0.6) +
   geom_jitter(height= 0, width = 0.20, size = 2.5, alpha= 0.4) +
 theme_classic(base_size=16)+
@@ -371,31 +247,28 @@ theme_classic(base_size=16)+
   scale_fill_manual(values = c(
   "1" = "darkgrey",
   "2" = "#CC79A7",
-  "neg" = "#009E73"
-))
+  "neg" = "#009E73"))
+
 faith_formatted_NA_group
 ```
-Statistical testing for the Faith's diversity metric between NA phylogenetic 
-groups. 
+
+#### Conduct statistical analysis of Faith's diversity between NA groups
+
 ```{r}
-faith_NA_group_df <- data.frame(na_group = as.factor(faith_metadata$na_group), 
-                                                 value = faith_metadata$PD)
+faith_NA_group_df <- data.frame(na_group = as.factor(faith_metadata$na_group), value = faith_metadata$PD)
 faith_NA_group_sig <- dunn.test(faith_NA_group_df$value, faith_NA_group_df$na_group, kw=TRUE, method = "bh")
 ```
-Significant comparisons mapped onto the initial boxplot.
+
+#### Add statistical annotations to the boxplot and save the figure
+
 ```{r}
 P_faith_group_NA <- faith_formatted_NA_group + geom_signif(
     comparison = list(c("1", "neg"), c("2","neg")),
     y_position = c(16,15.25),
     annotations = c("*","**"),
-    textsize = 10
-  )
+    textsize = 10)
+
 P_faith_group_NA
-ggsave("Inf_NA_Group_Faith.png", P_faith_group_NA, width= 6, height =9, dpi=300)
+
+ggsave("../visualizations/figures/alpha_diversity/NA_Group_Faith.png", P_faith_group_NA, width = 6, height =9, dpi=300)
 ```
-
- 
- 
-
-
-
