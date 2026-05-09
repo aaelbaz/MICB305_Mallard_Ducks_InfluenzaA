@@ -139,7 +139,7 @@ ha_auc <- ggplot() +
            auc(roc_test_ha), ha_model$auc_test_ci[1], ha_model$auc_test_ci[2]),
            size = 12) +
   labs(x = "False Positive Rate", y = "True Positive Rate")+
-  theme_classic(base_size=24)
+  theme_classic(base_size=40)
 
 ha_auc
 ```
@@ -175,7 +175,7 @@ na_auc <- ggplot() +
            auc(roc_test_na), na_model$auc_test_ci[1], na_model$auc_test_ci[2]),
            size = 12) +
   labs(x = "False Positive Rate", y = "True Positive Rate") +
-  theme_classic(base_size=24)
+  theme_classic(base_size=40)
 
 na_auc
 ```
